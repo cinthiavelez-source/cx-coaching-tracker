@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CX Coaching Tracker — CookUnity</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#F1F5F9;color:#1E293B;}
+
+        /* ── LOGIN OVERLAY ── */
+        #login-overlay{
+            position:fixed;inset:0;background:linear-gradient(135deg,#4F46E5 0%,#7C3AED 100%);
+            display:flex;align-items:center;justify-content:center;z-index:9999;
+        }
+        .login-box{
+            background:white;border-radius:1.5rem;padding:2.5rem;width:min(420px,90vw);
+            box-shadow:0 25px 60px rgba(0,0,0,0.3);
+        }
+        .login-logo{text-align:center;margin-bottom:1.75rem;}
+        .login-logo .icon{font-size:3rem;}
+        .login-logo h1{font-size:1.4rem;font-weight:700;color:#1E293B;margin-top:0.5rem;}
+        .login-logo p{font-size:0.85rem;color:#64748B;margin-top:0.25rem;}
+        .login-field{display:flex;flex-direction:column;gap:0.4rem;margin-bottom:1rem;}
+        .login-field label{font-size:0.78rem;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.04em;}
+        .login-field input{border:1.5px solid #E2E8F0;border-radius:0.5rem;padding:0.7rem 0.9rem;font-size:0.95rem;color:#1E293B;font-family:inherit;}
+        .login-field input:focus{outline:none;border-color:#4F46E5;box-shadow:0 0 0 3px rgba(79,70,229,0.12);}
+        .login-hint{font-size:0.78rem;color:#94A3B8;margin-top:0.25rem;}
+        .login-btn{width:100%;background:linear-gradient(135deg,#4F46E5,#7C3AED);color:white;border:none;border-radius:0.6rem;padding:0.8rem;font-size:0.95rem;font-weight:700;cursor:pointer;margin-top:0.5rem;transition:all 0.2s;font-family:inherit;}
+        .login-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(79,70,229,0.45);}
+        .login-error{color:#EF4444;font-size:0.82rem;margin-top:0.5rem;display:none;}
+
+        /* ── NAVBAR ── */
+        .navbar{background:linear-gradient(135deg,#4F46E5 0%,#7C3AED 100%);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 6px -1px rgba(0,0,0,0.15);position:sticky;top:0;z-index:100;flex-wrap:wrap;gap:0.5rem;}
+        .navbar-left{display:flex;align-items:center;gap:1.5rem;}
+        .navbar-brand{color:white;font-size:1.1rem;font-weight:700;padding:0.75rem 0;display:flex;align-items:center;gap:0.5rem;}
+        .navbar-brand small{font-size:0.7rem;font-weight:400;opacity:0.7;}
+        .navbar-nav{display:flex;gap:0.2rem;flex-wrap:wrap;}
+        .nav-btn{background:transparent;border:none;color:rgba(255,255,255,0.75);padding:0.6rem 1rem;cursor:pointer;border-radius:0.5rem;font-size:0.82rem;font-weight:500;transition:all 0.2s;display:flex;align-items:center;gap:0.35rem;white-space:nowrap;}
+        .nav-btn:hover,.nav-btn.active{background:rgba(255,255,255,0.18);color:white;}
+        .navbar-user{display:flex;align-items:center;gap:0.75rem;color:white;font-size:0.82rem;padding:0.5rem 0;}
+        .user-pill{background:rgba(255,255,255,0.2);border-radius:9999px;padding:0.35rem 0.85rem;display:flex;align-items:center;gap:0.5rem;font-weight:600;}
+        .user-avatar{width:1.75rem;height:1.75rem;border-radius:50%;background:rgba(255,255,255,0.35);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;}
+        .btn-logout{background:rgba(255,255,255,0.15);border:none;color:white;border-radius:0.4rem;padding:0.3rem 0.65rem;cursor:pointer;font-size:0.75rem;transition:background 0.2s;}
+        .btn-logout:hover{background:rgba(255,255,255,0.25);}
+
+        /* ── LAYOUT ── */
+        .main{max-width:1440px;margin:0 auto;padding:2rem;}
+        .page{display:none;}.page.active{display:block;}
+        .page-header{margin-bottom:1.5rem;}
+        .page-header h1{font-size:1.5rem;font-weight:700;}
+        .page-header p{color:#64748B;font-size:0.875rem;margin-top:0.2rem;}
+
+        /* ── CARDS ── */
+        .card{background:white;border-radius:1rem;padding:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,0.07);margin-bottom:1.5rem;}
+        .card-title{font-size:0.8rem;font-weight:700;color:#475569;margin-bottom:1.25rem;display:flex;align-items:center;gap:0.4rem;text-transform:uppercase;letter-spacing:0.04em;}
+
+        /* ── STATS ── */
+        .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1.25rem;margin-bottom:1.5rem;}
+        .stat-card{background:white;border-radius:1rem;padding:1.2rem 1.4rem;box-shadow:0 1px 3px rgba(0,0,0,0.07);display:flex;align-items:center;gap:1rem;}
+        .stat-icon{width:2.75rem;height:2.75rem;border-radius:0.7rem;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;}
+        .stat-value{font-size:1.65rem;font-weight:700;line-height:1;margin-bottom:0.2rem;}
+        .stat-label{font-size:0.72rem;color:#94A3B8;font-weight:500;line-height:1.3;}
+        .stat-delta{font-size:0.72rem;font-weight:700;margin-top:0.2rem;}
+        .delta-up{color:#10B981;}.delta-down{color:#EF4444;}.delta-neutral{color:#94A3B8;}
+
+        /* ── CHARTS ── */
+        .charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:1.5rem;margin-bottom:1.5rem;}
+        .chart-container{position:relative;height:270px;}
+
+        /* ── FORM ── */
+        .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:1.25rem;}
+        .form-group{display:flex;flex-direction:column;gap:0.4rem;}
+        .form-group.full-width{grid-column:1/-1;}
+        label{font-size:0.78rem;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.04em;}
+        input,select,textarea{border:1.5px solid #E2E8F0;border-radius:0.5rem;padding:0.625rem 0.875rem;font-size:0.9rem;color:#1E293B;transition:border-color 0.2s,box-shadow 0.2s;background:white;font-family:inherit;}
+        input:focus,select:focus,textarea:focus{outline:none;border-color:#4F46E5;box-shadow:0 0 0 3px rgba(79,70,229,0.1);}
+        textarea{resize:vertical;min-height:80px;}
+        input[type="number"]{-moz-appearance:textfield;}
+        input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;}
+        .field-hint{font-size:0.75rem;color:#94A3B8;margin-top:0.15rem;}
+
+        /* ── BUTTONS ── */
+        .btn{padding:0.65rem 1.4rem;border-radius:0.5rem;border:none;cursor:pointer;font-size:0.875rem;font-weight:600;transition:all 0.2s;font-family:inherit;}
+        .btn-primary{background:linear-gradient(135deg,#4F46E5,#7C3AED);color:white;}
+        .btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(79,70,229,0.4);}
+        .btn-secondary{background:#F1F5F9;color:#475569;}
+        .btn-secondary:hover{background:#E2E8F0;}
+        .form-actions{display:flex;gap:1rem;justify-content:flex-end;margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid #F1F5F9;}
+        .header-actions{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;gap:1rem;flex-wrap:wrap;}
+
+        /* ── PERIOD SELECTOR ── */
+        .period-tabs{display:flex;gap:0.5rem;flex-wrap:wrap;}
+        .period-btn{background:#F1F5F9;border:none;color:#475569;padding:0.45rem 1rem;border-radius:0.4rem;cursor:pointer;font-size:0.82rem;font-weight:600;transition:all 0.2s;font-family:inherit;}
+        .period-btn.active{background:#4F46E5;color:white;}
+        .period-btn:hover:not(.active){background:#E2E8F0;}
+
+        /* ── TABLE ── */
+        .table-wrapper{overflow-x:auto;}
+        table{width:100%;border-collapse:collapse;}
+        th{background:#F8FAFC;padding:0.7rem 1rem;text-align:left;font-size:0.72rem;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1.5px solid #E2E8F0;white-space:nowrap;}
+        td{padding:0.85rem 1rem;font-size:0.875rem;border-bottom:1px solid #F1F5F9;color:#334155;vertical-align:middle;}
+        tr:hover td{background:#FAFBFF;}
+        .num{text-align:right;}
+
+        /* ── BADGES ── */
+        .badge{display:inline-flex;align-items:center;padding:0.2rem 0.65rem;border-radius:9999px;font-size:0.72rem;font-weight:700;white-space:nowrap;}
+        .badge-improved{background:#DCFCE7;color:#15803D;}.badge-nochange{background:#FEF9C3;color:#A16207;}.badge-followup{background:#FEE2E2;color:#DC2626;}
+        .badge-csat{background:#EDE9FE;color:#6D28D9;}.badge-qa{background:#DBEAFE;color:#1D4ED8;}.badge-fcr{background:#D1FAE5;color:#047857;}.badge-tph{background:#FEF3C7;color:#B45309;}
+
+        /* ── FILTER BAR ── */
+        .filter-bar{display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;}
+        .filter-bar .form-group{min-width:150px;flex:1;}
+
+        /* ── PROGRESS ── */
+        .progress-wrap{display:flex;align-items:center;gap:0.75rem;min-width:130px;}
+        .progress-bar{flex:1;height:7px;background:#E2E8F0;border-radius:9999px;overflow:hidden;}
+        .progress-fill{height:100%;border-radius:9999px;transition:width 0.6s ease;}
+        .progress-fill.green{background:linear-gradient(90deg,#10B981,#34D399);}
+        .progress-fill.yellow{background:linear-gradient(90deg,#F59E0B,#FCD34D);}
+        .progress-fill.red{background:linear-gradient(90deg,#EF4444,#FCA5A5);}
+        .progress-label{font-size:0.72rem;font-weight:700;color:#64748B;min-width:2.5rem;text-align:right;}
+
+        /* ── TOAST ── */
+        .toast{position:fixed;bottom:2rem;right:2rem;background:#10B981;color:white;padding:0.85rem 1.4rem;border-radius:0.75rem;font-weight:600;font-size:0.875rem;box-shadow:0 10px 25px rgba(0,0,0,0.15);transform:translateY(120px);opacity:0;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);z-index:1000;}
+        .toast.show{transform:translateY(0);opacity:1;}
+
+        /* ── TREND CELLS ── */
+        .trend-up{color:#10B981;font-weight:700;}.trend-down{color:#EF4444;font-weight:700;}.trend-flat{color:#94A3B8;}
+
+        /* ── SECTION NOTE ── */
+        .section-note{font-size:0.78rem;color:#94A3B8;margin-bottom:1rem;}
+
+        /* ── INFO STRIP ── */
+        .info-strip{background:linear-gradient(135deg,#EDE9FE,#DBEAFE);border-radius:0.75rem;padding:1rem 1.25rem;margin-bottom:1.5rem;display:flex;align-items:flex-start;gap:0.75rem;font-size:0.85rem;color:#374151;}
+        .info-strip .icon{font-size:1.2rem;flex-shrink:0;margin-top:0.1rem;}
+
+        /* ── LOGGED BY BADGE ── */
+        .logged-by{display:inline-flex;align-items:center;gap:0.3rem;background:#F1F5F9;border-radius:9999px;padding:0.15rem 0.6rem;font-size:0.72rem;color:#475569;font-weight:600;}
+
+        @media(max-width:768px){
+            .main{padding:1rem;}
+            .charts-grid{grid-template-columns:1fr;}
+            .navbar{flex-direction:column;padding:0.75rem 1rem;}
+            .navbar-nav{flex-wrap:wrap;justify-content:center;}
+        }
+    </style>
+</head>
+<body>
+
+<!-- ════════════════════ LOGIN OVERLAY ════════════════════ -->
+<div id="login-overlay">
+    <div class="login-box">
+        <div class="login-logo">
+            <div class="icon">📋</div>
+            <h1>CX Coaching Tracker</h1>
+            <p>Sign in with your CookUnity account to continue</p>
+        </div>
+        <div class="login-field">
+            <label>Full Name</label>
+            <input type="text" id="login-name" placeholder="e.g. María García" autocomplete="name">
+        </div>
+        <div class="login-field">
+            <label>CookUnity Email</label>
+            <input type="email" id="login-email" placeholder="yourname@cookunity.com" autocomplete="email">
+            <span class="login-hint">Must be a @cookunity.com address</span>
+        </div>
+        <div id="login-error" class="login-error"></div>
+        <button class="login-btn" onclick="doLogin()">Sign In →</button>
+    </div>
+</div>
+
+<!-- ════════════════════ NAVBAR ════════════════════ -->
+<nav class="navbar">
+    <div class="navbar-left">
+        <div class="navbar-brand">📋 CX Coaching Tracker <small>CookUnity</small></div>
+        <div class="navbar-nav">
+            <button class="nav-btn active" onclick="showPage('dashboard')">📊 Dashboard</button>
+            <button class="nav-btn" onclick="showPage('log')">➕ Log Session</button>
+            <button class="nav-btn" onclick="showPage('sessions')">📋 Sessions Log</button>
+            <button class="nav-btn" onclick="showPage('wow')">📅 Week over Week</button>
+            <button class="nav-btn" onclick="showPage('mom')">📆 Month over Month</button>
+        </div>
+    </div>
+    <div class="navbar-user" id="navbar-user"></div>
+</nav>
+
+<!-- ════════════════════ MAIN ════════════════════ -->
+<div class="main">
+
+    <!-- ══ DASHBOARD ══ -->
+    <div id="page-dashboard" class="page active">
+        <div class="page-header">
+            <h1>Coaching Dashboard</h1>
+            <p>Overview of all coaching activity — sessions, KPI lift, tool effectiveness, and specialist progress.</p>
+        </div>
+        <div class="stats-grid" id="stats-grid"></div>
+        <div class="charts-grid">
+            <div class="card"><div class="card-title">🔧 Tool Effectiveness — Avg KPI Lift %</div><div class="chart-container"><canvas id="chartTools"></canvas></div></div>
+            <div class="card"><div class="card-title">🎯 Sessions Distribution by KPI</div><div class="chart-container"><canvas id="chartKPI"></canvas></div></div>
+        </div>
+        <div class="charts-grid">
+            <div class="card"><div class="card-title">✅ Session Outcomes Breakdown</div><div class="chart-container"><canvas id="chartOutcomes"></canvas></div></div>
+            <div class="card"><div class="card-title">📈 Avg Sessions to Reach Target — by KPI</div><div class="chart-container"><canvas id="chartSessionsToTarget"></canvas></div></div>
+        </div>
+        <div class="card">
+            <div class="card-title">👥 Specialist Progress Tracker</div>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>Specialist</th><th>Coach</th><th>KPI</th><th>Baseline</th><th>Current</th><th>Target</th><th>Progress</th><th># Sessions</th><th>Status</th></tr></thead>
+                    <tbody id="specialist-progress-table"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ LOG SESSION ══ -->
+    <div id="page-log" class="page">
+        <div class="page-header">
+            <h1>Log Coaching Session</h1>
+            <p>Fields marked * are required. Session will be tagged with your account.</p>
+        </div>
+        <div id="log-user-strip" class="info-strip">
+            <span class="icon">👤</span>
+            <span id="log-user-text">Logging as <strong></strong></span>
+        </div>
+        <div class="card">
+            <form id="session-form" novalidate>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>📅 Session Date *</label>
+                        <input type="date" id="f-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>👤 Specialist Name *</label>
+                        <input type="text" id="f-specialist" placeholder="e.g. Ana López" required list="list-specialists" autocomplete="off">
+                        <datalist id="list-specialists"></datalist>
+                    </div>
+                    <div class="form-group">
+                        <label>🎓 Coach / Supervisor *</label>
+                        <input type="text" id="f-coach" placeholder="e.g. María García" required list="list-coaches" autocomplete="off">
+                        <datalist id="list-coaches"></datalist>
+                    </div>
+                    <div class="form-group">
+                        <label>🎯 KPI Coached *</label>
+                        <select id="f-kpi" required>
+                            <option value="">Select KPI…</option>
+                            <option value="CSAT">CSAT — Customer Satisfaction Score</option>
+                            <option value="QA Score">QA Score — Quality Assurance</option>
+                            <option value="FCR">FCR — First Contact Resolution</option>
+                            <option value="TPH">TPH — Tickets Per Hour</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>📉 KPI Baseline (start of plan)</label>
+                        <input type="number" id="f-baseline" placeholder="e.g. 72" step="0.1" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>🏁 KPI Target</label>
+                        <input type="number" id="f-target" placeholder="e.g. 85" step="0.1" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>📊 Current KPI Score (after this session)</label>
+                        <input type="number" id="f-current" placeholder="e.g. 78" step="0.1" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>🔧 Tool Used *</label>
+                        <select id="f-tool" required>
+                            <option value="">Select tool…</option>
+                            <option value="Role-play / Simulation">🎭 Role-play / Simulation</option>
+                            <option value="Call shadowing / Side-by-side">👁️ Call shadowing / Side-by-side</option>
+                            <option value="Written feedback / Scorecard">📝 Written feedback / Scorecard</option>
+                            <option value="Training module / E-learning">📚 Training module / E-learning</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>✅ Session Outcome *</label>
+                        <select id="f-outcome" required>
+                            <option value="">Select outcome…</option>
+                            <option value="Improved">✅ Improved</option>
+                            <option value="No Change">⚠️ No Change</option>
+                            <option value="Needs Follow-up">🔄 Needs Follow-up</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>🔍 Root Cause Coached</label>
+                        <textarea id="f-rootcause" placeholder="Describe the root cause of the KPI gap identified and addressed in this session…"></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>📝 Session Notes &amp; Next Steps</label>
+                        <textarea id="f-notes" placeholder="Additional observations, actions assigned, follow-up date…"></textarea>
+                    </div>
+                </div>
+                <div id="form-error" style="color:#EF4444;font-size:0.85rem;margin-top:1rem;display:none;"></div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()">Clear</button>
+                    <button type="submit" class="btn btn-primary">💾 Save Session</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ══ SESSIONS LOG ══ -->
+    <div id="page-sessions" class="page">
+        <div class="header-actions">
+            <div class="page-header" style="margin-bottom:0">
+                <h1>Sessions Log</h1>
+                <p>Full history — includes who logged each session for full traceability.</p>
+            </div>
+            <button class="btn btn-secondary" onclick="exportCSV()">⬇️ Export CSV</button>
+        </div>
+        <div class="card">
+            <div class="filter-bar">
+                <div class="form-group"><label>Specialist</label><input type="text" id="filter-specialist" placeholder="Search…" oninput="renderSessionsTable()"></div>
+                <div class="form-group"><label>Coach</label><input type="text" id="filter-coach" placeholder="Search…" oninput="renderSessionsTable()"></div>
+                <div class="form-group"><label>Logged By</label><input type="text" id="filter-loggedby" placeholder="Search…" oninput="renderSessionsTable()"></div>
+                <div class="form-group"><label>KPI</label>
+                    <select id="filter-kpi" onchange="renderSessionsTable()">
+                        <option value="">All KPIs</option><option>CSAT</option><option>QA Score</option><option>FCR</option><option>TPH</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Tool</label>
+                    <select id="filter-tool" onchange="renderSessionsTable()">
+                        <option value="">All Tools</option>
+                        <option value="Role-play / Simulation">Role-play</option>
+                        <option value="Call shadowing / Side-by-side">Call shadowing</option>
+                        <option value="Written feedback / Scorecard">Written feedback</option>
+                        <option value="Training module / E-learning">E-learning</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Outcome</label>
+                    <select id="filter-outcome" onchange="renderSessionsTable()">
+                        <option value="">All Outcomes</option><option>Improved</option><option>No Change</option><option>Needs Follow-up</option>
+                    </select>
+                </div>
+                <div class="form-group" style="justify-content:flex-end"><label>&nbsp;</label><button class="btn btn-secondary" onclick="clearFilters()">Clear</button></div>
+            </div>
+        </div>
+        <div class="card">
+            <div id="sessions-count" class="section-note"></div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>Date</th><th>Specialist</th><th>Coach</th><th>KPI</th><th>Baseline</th><th>Current</th><th>Target</th><th>Lift</th><th>Tool</th><th>Outcome</th><th>Logged By</th><th>Root Cause</th><th></th></tr>
+                    </thead>
+                    <tbody id="sessions-table"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ WEEK OVER WEEK ══ -->
+    <div id="page-wow" class="page">
+        <div class="header-actions">
+            <div class="page-header" style="margin-bottom:0">
+                <h1>Week over Week</h1>
+                <p>Coaching activity and KPI improvement trends broken down by week.</p>
+            </div>
+            <div class="period-tabs">
+                <button class="period-btn active" onclick="setWowPeriod(8,this)">Last 8 wks</button>
+                <button class="period-btn" onclick="setWowPeriod(12,this)">Last 12 wks</button>
+                <button class="period-btn" onclick="setWowPeriod(0,this)">All time</button>
+            </div>
+        </div>
+        <div class="stats-grid" id="wow-stats"></div>
+        <div class="charts-grid">
+            <div class="card" style="grid-column:1/-1">
+                <div class="card-title">📊 Sessions Per Week &amp; Improvement Rate %</div>
+                <div class="chart-container" style="height:300px"><canvas id="chartWowMain"></canvas></div>
+            </div>
+        </div>
+        <div class="charts-grid">
+            <div class="card">
+                <div class="card-title">🧩 Outcomes per Week (Stacked)</div>
+                <div class="chart-container"><canvas id="chartWowOutcomes"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-title">🎯 KPI Focus per Week (Stacked)</div>
+                <div class="chart-container"><canvas id="chartWowKPI"></canvas></div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">📋 Weekly Breakdown Table</div>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>Week</th><th class="num">Sessions</th><th class="num">WoW Δ</th><th class="num">Improved</th><th class="num">No Change</th><th class="num">Follow-up</th><th class="num">Impr. Rate</th><th class="num">Avg KPI Lift</th><th>Top Tool</th><th>Specialists Coached</th></tr></thead>
+                    <tbody id="wow-table"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ MONTH OVER MONTH ══ -->
+    <div id="page-mom" class="page">
+        <div class="header-actions">
+            <div class="page-header" style="margin-bottom:0">
+                <h1>Month over Month</h1>
+                <p>Monthly view of coaching cadence, tool mix, and KPI improvement trends.</p>
+            </div>
+            <div class="period-tabs">
+                <button class="period-btn active" onclick="setMomPeriod(6,this)">Last 6 mo</button>
+                <button class="period-btn" onclick="setMomPeriod(12,this)">Last 12 mo</button>
+                <button class="period-btn" onclick="setMomPeriod(0,this)">All time</button>
+            </div>
+        </div>
+        <div class="stats-grid" id="mom-stats"></div>
+        <div class="charts-grid">
+            <div class="card" style="grid-column:1/-1">
+                <div class="card-title">📊 Sessions Per Month &amp; Improvement Rate %</div>
+                <div class="chart-container" style="height:300px"><canvas id="chartMomMain"></canvas></div>
+            </div>
+        </div>
+        <div class="charts-grid">
+            <div class="card">
+                <div class="card-title">🔧 Tool Mix by Month (Stacked)</div>
+                <div class="chart-container"><canvas id="chartMomTools"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-title">🎯 KPI Focus by Month (Stacked)</div>
+                <div class="chart-container"><canvas id="chartMomKPI"></canvas></div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">📋 Monthly Breakdown Table</div>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>Month</th><th class="num">Sessions</th><th class="num">MoM Δ</th><th class="num">Improved</th><th class="num">Impr. Rate</th><th class="num">Avg KPI Lift</th><th>Top KPI</th><th>Top Tool</th><th class="num">New Specialists</th><th class="num">Active Coaches</th></tr></thead>
+                    <tbody id="mom-table"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div><!-- /main -->
+
+<div id="toast" class="toast"></div>
+
+<!-- ════════════════════ SCRIPT ════════════════════ -->
+<script>
+'use strict';
+
+// ─── CONSTANTS ──────────────────────────────────────────
+const KEY      = 'cx_coaching_v3';
+const USER_KEY = 'cx_user_v1';
+const COLORS   = ['#7C3AED','#2563EB','#047857','#D97706','#DC2626','#0891B2'];
+const TOOL_SHORT = {
+    'Role-play / Simulation':       '🎭 Role-play',
+    'Call shadowing / Side-by-side':'👁️ Shadowing',
+    'Written feedback / Scorecard': '📝 Written fbk',
+    'Training module / E-learning': '📚 E-learning'
+};
+const KPI_BADGE = {CSAT:'badge-csat','QA Score':'badge-qa',FCR:'badge-fcr',TPH:'badge-tph'};
+const OUT_BADGE = {Improved:'badge-improved','No Change':'badge-nochange','Needs Follow-up':'badge-followup'};
+
+let wowPeriod = 8, momPeriod = 6;
+const charts = {};
+
+// ─── STORAGE ────────────────────────────────────────────
+function load()    { try{return JSON.parse(localStorage.getItem(KEY))||[];}catch(e){return[];} }
+function save(arr) { localStorage.setItem(KEY,JSON.stringify(arr)); }
+function getUser() { try{return JSON.parse(localStorage.getItem(USER_KEY))||null;}catch(e){return null;} }
+function setUser(u){ localStorage.setItem(USER_KEY,JSON.stringify(u)); }
+
+// ─── LOGIN ───────────────────────────────────────────────
+function doLogin() {
+    const name  = document.getElementById('login-name').value.trim();
+    const email = document.getElementById('login-email').value.trim().toLowerCase();
+    const err   = document.getElementById('login-error');
+    err.style.display='none';
+
+    if (!name) { err.textContent='Please enter your full name.'; err.style.display='block'; return; }
+    if (!email.endsWith('@cookunity.com')) {
+        err.textContent='Only @cookunity.com email addresses are allowed.';
+        err.style.display='block'; return;
+    }
+
+    setUser({name, email});
+    document.getElementById('login-overlay').style.display='none';
+    initApp();
+}
+
+document.getElementById('login-name').addEventListener('keydown',  e=>{ if(e.key==='Enter') document.getElementById('login-email').focus(); });
+document.getElementById('login-email').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+
+function logout() {
+    localStorage.removeItem(USER_KEY);
+    document.getElementById('login-overlay').style.display='flex';
+    document.getElementById('login-name').value='';
+    document.getElementById('login-email').value='';
+}
+
+function renderNavUser() {
+    const u = getUser();
+    if (!u) return;
+    const initials = u.name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+    document.getElementById('navbar-user').innerHTML=`
+        <div class="user-pill">
+            <div class="user-avatar">${initials}</div>
+            ${u.name}
+        </div>
+        <button class="btn-logout" onclick="logout()">Sign out</button>
+    `;
+    document.getElementById('log-user-text').innerHTML=`Logging as <strong>${u.name}</strong> &lt;${u.email}&gt;`;
+}
+
+// ─── SAMPLE DATA ─────────────────────────────────────────
+function initSample() {
+    if (load().length) return;
+    save([
+        {id:1, date:'2026-01-05',specialist:'Ana López',   coach:'María García', kpi:'CSAT',    baseline:72,target:85,current:75,tool:'Role-play / Simulation',        outcome:'Improved',       rootCause:'Difficulty managing emotional customer interactions; de-escalation language needs work',notes:'Great engagement.',loggedBy:{name:'María García',email:'mgarcia@cookunity.com'}},
+        {id:2, date:'2026-01-12',specialist:'Ana López',   coach:'María García', kpi:'CSAT',    baseline:72,target:85,current:80,tool:'Call shadowing / Side-by-side',  outcome:'Improved',       rootCause:'Difficulty managing emotional customer interactions',notes:'Strong improvement after shadowing top performer.',loggedBy:{name:'María García',email:'mgarcia@cookunity.com'}},
+        {id:3, date:'2026-01-19',specialist:'Ana López',   coach:'María García', kpi:'CSAT',    baseline:72,target:85,current:87,tool:'Role-play / Simulation',        outcome:'Improved',       rootCause:'Difficulty managing emotional customer interactions',notes:'Target reached!',loggedBy:{name:'María García',email:'mgarcia@cookunity.com'}},
+        {id:4, date:'2026-01-08',specialist:'Luis Ramos',  coach:'Carlos Díaz',  kpi:'FCR',     baseline:65,target:80,current:70,tool:'Written feedback / Scorecard',  outcome:'Improved',       rootCause:'Not leveraging knowledge base effectively on first contact',notes:'Shared KB navigation tips.',loggedBy:{name:'Carlos Díaz',email:'cdiaz@cookunity.com'}},
+        {id:5, date:'2026-01-15',specialist:'Luis Ramos',  coach:'Carlos Díaz',  kpi:'FCR',     baseline:65,target:80,current:71,tool:'Call shadowing / Side-by-side',  outcome:'No Change',      rootCause:'Not leveraging knowledge base on first contact',notes:'Minimal improvement. Switching to e-learning.',loggedBy:{name:'Carlos Díaz',email:'cdiaz@cookunity.com'}},
+        {id:6, date:'2026-01-22',specialist:'Luis Ramos',  coach:'Carlos Díaz',  kpi:'FCR',     baseline:65,target:80,current:78,tool:'Training module / E-learning',   outcome:'Improved',       rootCause:'Not leveraging knowledge base on first contact',notes:'E-learning module showing strong results.',loggedBy:{name:'Carlos Díaz',email:'cdiaz@cookunity.com'}},
+        {id:7, date:'2026-01-10',specialist:'Sofia Chen',  coach:'María García', kpi:'QA Score',baseline:78,target:93,current:82,tool:'Written feedback / Scorecard',  outcome:'Improved',       rootCause:'Missing compliance language in food allergen disclosures',notes:'Shared updated script.',loggedBy:{name:'María García',email:'mgarcia@cookunity.com'}},
+        {id:8, date:'2026-01-17',specialist:'Sofia Chen',  coach:'María García', kpi:'QA Score',baseline:78,target:93,current:88,tool:'Role-play / Simulation',        outcome:'Improved',       rootCause:'Missing compliance language in allergen disclosures',notes:'Role-play scenarios on allergen topics.',loggedBy:{name:'María García',email:'mgarcia@cookunity.com'}},
+        {id:9, date:'2026-01-24',specialist:'Sofia Chen',  coach:'María García', kpi:'QA Score',baseline:78,target:93,current:91,tool:'Written feedback / Scorecard',  outcome:'Needs Follow-up',rootCause:'Missing compliance language',notes:'Almost at target. One more session needed.',loggedBy:{name:'María García',email:'mgarcia@cookunity.com'}},
+        {id:10,date:'2026-02-03',specialist:'Sofia Chen',  coach:'María García', kpi:'QA Score',baseline:78,target:93,current:94,tool:'Role-play / Simulation',        outcome:'Improved',       rootCause:'Missing compliance language',notes:'Target exceeded in 4 sessions.',loggedBy:{name:'María García',email:'mgarcia@cookunity.com'}},
+        {id:11,date:'2026-01-14',specialist:'James Park',  coach:'Carlos Díaz',  kpi:'TPH',     baseline:14,target:18,current:15,tool:'Call shadowing / Side-by-side',  outcome:'Improved',       rootCause:'Lengthy tool navigation slowing resolution time per ticket',notes:'Showed keyboard shortcuts.',loggedBy:{name:'Carlos Díaz',email:'cdiaz@cookunity.com'}},
+        {id:12,date:'2026-01-21',specialist:'James Park',  coach:'Carlos Díaz',  kpi:'TPH',     baseline:14,target:18,current:17,tool:'Training module / E-learning',   outcome:'Improved',       rootCause:'Lengthy tool navigation slowing resolution time',notes:'Systems efficiency e-learning showing results.',loggedBy:{name:'Carlos Díaz',email:'cdiaz@cookunity.com'}},
+        {id:13,date:'2026-01-28',specialist:'James Park',  coach:'Carlos Díaz',  kpi:'TPH',     baseline:14,target:18,current:19,tool:'Role-play / Simulation',        outcome:'Improved',       rootCause:'Tool navigation speed',notes:'Target reached in 3 sessions.',loggedBy:{name:'Carlos Díaz',email:'cdiaz@cookunity.com'}},
+        {id:14,date:'2026-02-04',specialist:'James Park',  coach:'Carlos Díaz',  kpi:'CSAT',    baseline:74,target:85,current:77,tool:'Role-play / Simulation',        outcome:'Needs Follow-up',rootCause:'Tone comes across as transactional rather than empathetic',notes:'New coaching plan started.',loggedBy:{name:'Carlos Díaz',email:'cdiaz@cookunity.com'}},
+        {id:15,date:'2026-02-03',specialist:'Priya Nair',  coach:'María García', kpi:'FCR',     baseline:60,target:78,current:63,tool:'Written feedback / Scorecard',  outcome:'No Change',      rootCause:'Escalating tickets that could be resolved at first contact',notes:'E-learning assigned.',loggedBy:{name:'María García',email:'mgarcia@cookunity.com'}},
+        {id:16,date:'2026-02-10',specialist:'Priya Nair',  coach:'María García', kpi:'FCR',     baseline:60,target:78,current:69,tool:'Training module / E-learning',   outcome:'Improved',       rootCause:'Escalating tickets that could be resolved at first contact',notes:'Significant jump in FCR.',loggedBy:{name:'María García',email:'mgarcia@cookunity.com'}},
+        {id:17,date:'2026-02-17',specialist:'Priya Nair',  coach:'María García', kpi:'CSAT',    baseline:70,target:83,current:74,tool:'Call shadowing / Side-by-side',  outcome:'Improved',       rootCause:'Response tone creating negative first impression',notes:'Shadowing helped.',loggedBy:{name:'María García',email:'mgarcia@cookunity.com'}},
+        {id:18,date:'2026-02-10',specialist:'Diego Herrera',coach:'Carlos Díaz', kpi:'CSAT',    baseline:68,target:82,current:70,tool:'Written feedback / Scorecard',  outcome:'No Change',      rootCause:'Over-apologizing without offering solutions',notes:'Shared acknowledge→own→solve→close framework.',loggedBy:{name:'Carlos Díaz',email:'cdiaz@cookunity.com'}},
+        {id:19,date:'2026-02-17',specialist:'Diego Herrera',coach:'Carlos Díaz', kpi:'CSAT',    baseline:68,target:82,current:76,tool:'Role-play / Simulation',        outcome:'Improved',       rootCause:'Over-apologizing without offering solutions',notes:'Huge jump after role-play.',loggedBy:{name:'Carlos Díaz',email:'cdiaz@cookunity.com'}},
+        {id:20,date:'2026-02-24',specialist:'Diego Herrera',coach:'Carlos Díaz', kpi:'QA Score',baseline:80,target:92,current:85,tool:'Written feedback / Scorecard',  outcome:'Improved',       rootCause:'Inconsistent use of required closing statement',notes:'Reviewing QA rubric closing criteria.',loggedBy:{name:'Carlos Díaz',email:'cdiaz@cookunity.com'}},
+    ]);
+}
+
+// ─── NAVIGATION ──────────────────────────────────────────
+const PAGES = ['dashboard','log','sessions','wow','mom'];
+function showPage(page) {
+    PAGES.forEach((p,i)=>{
+        document.getElementById('page-'+p).classList.toggle('active',p===page);
+        document.querySelectorAll('.nav-btn')[i].classList.toggle('active',p===page);
+    });
+    if(page==='dashboard') renderDashboard();
+    if(page==='sessions')  { renderSessionsTable(); updateDatalistsFromSessions(); }
+    if(page==='log')       updateDatalistsFromSessions();
+    if(page==='wow')       renderWoW();
+    if(page==='mom')       renderMoM();
+}
+
+// ─── AUTOCOMPLETE ────────────────────────────────────────
+function updateDatalistsFromSessions() {
+    const s=load();
+    const sp=[...new Set(s.map(x=>x.specialist))].sort();
+    const co=[...new Set(s.map(x=>x.coach))].sort();
+    document.getElementById('list-specialists').innerHTML=sp.map(n=>`<option value="${n}">`).join('');
+    document.getElementById('list-coaches').innerHTML=co.map(n=>`<option value="${n}">`).join('');
+}
+
+// ─── FORM ────────────────────────────────────────────────
+document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
+
+document.getElementById('session-form').addEventListener('submit',function(e){
+    e.preventDefault();
+    const errEl=document.getElementById('form-error');
+    errEl.style.display='none';
+    const required=['f-date','f-specialist','f-coach','f-kpi','f-tool','f-outcome'];
+    if(required.some(id=>!document.getElementById(id).value.trim())){
+        errEl.textContent='⚠️ Please fill in all required fields.';
+        errEl.style.display='block'; return;
+    }
+    const u=getUser();
+    const sessions=load();
+    sessions.push({
+        id:Date.now(),
+        date:document.getElementById('f-date').value,
+        specialist:document.getElementById('f-specialist').value.trim(),
+        coach:document.getElementById('f-coach').value.trim(),
+        kpi:document.getElementById('f-kpi').value,
+        baseline:pfn('f-baseline'),target:pfn('f-target'),current:pfn('f-current'),
+        tool:document.getElementById('f-tool').value,
+        outcome:document.getElementById('f-outcome').value,
+        rootCause:document.getElementById('f-rootcause').value.trim(),
+        notes:document.getElementById('f-notes').value.trim(),
+        loggedBy:u||{name:'Unknown',email:''},
+    });
+    save(sessions);
+    showToast('✅ Session saved!');
+    resetForm();
+    showPage('dashboard');
+});
+
+function pfn(id){ const v=document.getElementById(id).value; return v===''?null:parseFloat(v); }
+function resetForm(){
+    document.getElementById('session-form').reset();
+    document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
+    document.getElementById('form-error').style.display='none';
+}
+
+// ─── HELPERS ─────────────────────────────────────────────
+function fmtDate(d){ if(!d)return'—'; const[y,m,day]=d.split('-'); return`${day}/${m}/${y}`; }
+function lift(s){ if(s.current===null||s.baseline===null||s.baseline===0)return null; return s.kpi==='AHT'?(s.baseline-s.current)/s.baseline*100:(s.current-s.baseline)/Math.abs(s.baseline)*100; }
+function destroyChart(id){ if(charts[id]){charts[id].destroy();delete charts[id];} }
+
+// Get ISO week key YYYY-WNN and label "Wk Jan 5"
+function weekKey(d){
+    const dt=new Date(d+'T00:00:00');
+    const day=dt.getDay()||7;
+    dt.setDate(dt.getDate()+4-day);
+    const jan4=new Date(dt.getFullYear(),0,4);
+    const wn=Math.ceil(((dt-jan4)/86400000+1)/7);
+    return`${dt.getFullYear()}-W${String(wn).padStart(2,'0')}`;
+}
+function weekLabel(d){
+    const dt=new Date(d+'T00:00:00');
+    const day=dt.getDay()||7;
+    const mon=new Date(dt); mon.setDate(dt.getDate()-day+1);
+    return mon.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+function monthKey(d){ return d.slice(0,7); }
+function monthLabel(mk){
+    const[y,m]=mk.split('-');
+    return new Date(+y,+m-1,1).toLocaleDateString('en-US',{month:'short',year:'numeric'});
+}
+
+function topTool(sessions){
+    const c={}; sessions.forEach(s=>{ c[s.tool]=(c[s.tool]||0)+1; });
+    const top=Object.entries(c).sort((a,b)=>b[1]-a[1])[0];
+    return top?TOOL_SHORT[top[0]]||top[0]:'—';
+}
+
+// ─── DASHBOARD ───────────────────────────────────────────
+function renderDashboard(){
+    const sessions=load();
+    renderStats(sessions);
+    renderCharts(sessions);
+    renderSpecialistProgress(sessions);
+}
+
+function renderStats(sessions){
+    if(!sessions.length){document.getElementById('stats-grid').innerHTML='';return;}
+    const improved=sessions.filter(s=>s.outcome==='Improved').length;
+    const rate=Math.round(improved/sessions.length*100);
+    const specs=new Set(sessions.map(s=>s.specialist)).size;
+    const coaches=new Set(sessions.map(s=>s.coach)).size;
+    const toolMap={};
+    sessions.forEach(s=>{
+        const l=lift(s); if(l===null)return;
+        if(!toolMap[s.tool])toolMap[s.tool]={total:0,count:0};
+        toolMap[s.tool].total+=l; toolMap[s.tool].count++;
+    });
+    let bestTool='N/A',bestLift=-Infinity;
+    Object.entries(toolMap).forEach(([t,d])=>{ const a=d.total/d.count; if(a>bestLift){bestLift=a;bestTool=t.split('/')[0].trim();} });
+    const kpiCount={};sessions.forEach(s=>{kpiCount[s.kpi]=(kpiCount[s.kpi]||0)+1;});
+    const topKPI=Object.entries(kpiCount).sort((a,b)=>b[1]-a[1])[0];
+
+    document.getElementById('stats-grid').innerHTML=`
+        <div class="stat-card"><div class="stat-icon" style="background:#EDE9FE">📋</div><div><div class="stat-value" style="color:#7C3AED">${sessions.length}</div><div class="stat-label">Total Sessions</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#D1FAE5">👥</div><div><div class="stat-value" style="color:#047857">${specs}</div><div class="stat-label">Specialists Coached</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#FEF9C3">🎓</div><div><div class="stat-value" style="color:#B45309">${coaches}</div><div class="stat-label">Active Coaches</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#DBEAFE">✅</div><div><div class="stat-value" style="color:#1D4ED8">${rate}%</div><div class="stat-label">Improvement Rate</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#FEE2E2">🔧</div><div><div class="stat-value" style="color:#B91C1C;font-size:1.05rem">${bestTool}</div><div class="stat-label">Top Tool by KPI Lift${bestLift>0?' (+'+bestLift.toFixed(1)+'%)':''}</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#FCE7F3">🎯</div><div><div class="stat-value" style="color:#9D174D;font-size:1.15rem">${topKPI?topKPI[0]:'—'}</div><div class="stat-label">Most Coached KPI${topKPI?' ('+topKPI[1]+' sessions)':''}</div></div></div>
+    `;
+}
+
+function renderCharts(sessions){
+    // Tool effectiveness
+    const toolData={};
+    sessions.forEach(s=>{ const l=lift(s); if(l===null)return; if(!toolData[s.tool])toolData[s.tool]={total:0,count:0}; toolData[s.tool].total+=l; toolData[s.tool].count++; });
+    const tL=Object.keys(toolData).map(t=>t.split('/')[0].trim());
+    const tV=Object.values(toolData).map(d=>+(d.total/d.count).toFixed(2));
+    destroyChart('tools');
+    if(tL.length) charts['tools']=new Chart(document.getElementById('chartTools'),{type:'bar',data:{labels:tL,datasets:[{label:'Avg KPI Lift %',data:tV,backgroundColor:COLORS.slice(0,tL.length),borderRadius:8,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+(ctx.raw>=0?'+':'')+ctx.raw+'% avg lift'}}},scales:{y:{grid:{color:'#F1F5F9'},ticks:{callback:v=>v+'%'}},x:{grid:{display:false}}}}});
+
+    // KPI donut
+    const kpiC={};sessions.forEach(s=>{kpiC[s.kpi]=(kpiC[s.kpi]||0)+1;});
+    destroyChart('kpi');
+    charts['kpi']=new Chart(document.getElementById('chartKPI'),{type:'doughnut',data:{labels:Object.keys(kpiC),datasets:[{data:Object.values(kpiC),backgroundColor:COLORS,borderWidth:3,borderColor:'white'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},cutout:'62%'}});
+
+    // Outcomes donut
+    const outc={'Improved':0,'No Change':0,'Needs Follow-up':0};
+    sessions.forEach(s=>{outc[s.outcome]=(outc[s.outcome]||0)+1;});
+    destroyChart('outcomes');
+    charts['outcomes']=new Chart(document.getElementById('chartOutcomes'),{type:'doughnut',data:{labels:Object.keys(outc),datasets:[{data:Object.values(outc),backgroundColor:['#10B981','#F59E0B','#EF4444'],borderWidth:3,borderColor:'white'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},cutout:'62%'}});
+
+    // Sessions to target
+    const planMap={};
+    sessions.forEach(s=>{
+        const key=`${s.specialist}__${s.kpi}`;
+        if(!planMap[key])planMap[key]={kpi:s.kpi,sessions:0,reached:false};
+        planMap[key].sessions++;
+        if(s.current!==null&&s.target!==null){const hit=s.kpi==='AHT'?s.current<=s.target:s.current>=s.target;if(hit)planMap[key].reached=true;}
+    });
+    const kpiS={};
+    Object.values(planMap).forEach(p=>{if(!p.reached)return;if(!kpiS[p.kpi])kpiS[p.kpi]={total:0,count:0};kpiS[p.kpi].total+=p.sessions;kpiS[p.kpi].count++;});
+    const k2L=Object.keys(kpiS),k2V=k2L.map(k=>+(kpiS[k].total/kpiS[k].count).toFixed(1));
+    destroyChart('sessionsToTarget');
+    charts['sessionsToTarget']=new Chart(document.getElementById('chartSessionsToTarget'),{type:'bar',data:{labels:k2L.length?k2L:['No completed plans yet'],datasets:[{label:'Avg sessions to target',data:k2V.length?k2V:[0],backgroundColor:COLORS,borderRadius:8,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.raw+' sessions avg'}}},scales:{y:{grid:{color:'#F1F5F9'},beginAtZero:true,ticks:{stepSize:1}},x:{grid:{display:false}}}}});
+}
+
+function renderSpecialistProgress(sessions){
+    const plans={};
+    sessions.forEach(s=>{
+        const key=`${s.specialist}__${s.kpi}`;
+        if(!plans[key])plans[key]={specialist:s.specialist,coach:s.coach,kpi:s.kpi,baseline:s.baseline,target:s.target,current:s.current,sessions:0,latestDate:'0'};
+        plans[key].sessions++;
+        if(s.date>=plans[key].latestDate){plans[key].latestDate=s.date;if(s.current!==null)plans[key].current=s.current;if(s.target!==null)plans[key].target=s.target;}
+        if(s.baseline!==null&&plans[key].baseline===null)plans[key].baseline=s.baseline;
+    });
+    const tbody=document.getElementById('specialist-progress-table');
+    if(!Object.keys(plans).length){tbody.innerHTML='<tr><td colspan="9"><div class="empty-state" style="padding:2rem;text-align:center;color:#94A3B8">No sessions yet.</div></td></tr>';return;}
+    tbody.innerHTML=Object.values(plans).sort((a,b)=>a.specialist.localeCompare(b.specialist)).map(p=>{
+        const{baseline:bl,target:tgt,current:cur,kpi}=p;
+        let pct=0,fillColor='red',status='—';
+        if(bl!==null&&tgt!==null&&cur!==null){
+            const range=Math.abs(tgt-bl),achieved=kpi==='AHT'?Math.max(0,bl-cur):Math.max(0,cur-bl);
+            pct=range>0?Math.min(100,Math.round(achieved/range*100)):0;
+            const hit=kpi==='AHT'?cur<=tgt:cur>=tgt;
+            fillColor=hit?'green':pct>=50?'yellow':'red';
+            status=hit?'✅ Target Reached':pct>=50?'⏳ In Progress':'🔴 Below Pace';
+        }
+        return`<tr><td><strong>${p.specialist}</strong></td><td>${p.coach}</td><td><span class="badge ${KPI_BADGE[kpi]||'badge-csat'}">${kpi}</span></td><td>${bl!==null?bl:'—'}</td><td>${cur!==null?`<strong>${cur}</strong>`:'—'}</td><td>${tgt!==null?tgt:'—'}</td><td><div class="progress-wrap"><div class="progress-bar"><div class="progress-fill ${fillColor}" style="width:${pct}%"></div></div><span class="progress-label">${pct}%</span></div></td><td style="text-align:center"><strong>${p.sessions}</strong></td><td>${status}</td></tr>`;
+    }).join('');
+}
+
+// ─── SESSIONS TABLE ───────────────────────────────────────
+function renderSessionsTable(){
+    let sessions=load();
+    const fS=document.getElementById('filter-specialist').value.toLowerCase();
+    const fC=document.getElementById('filter-coach').value.toLowerCase();
+    const fL=document.getElementById('filter-loggedby').value.toLowerCase();
+    const fK=document.getElementById('filter-kpi').value;
+    const fT=document.getElementById('filter-tool').value;
+    const fO=document.getElementById('filter-outcome').value;
+    if(fS)sessions=sessions.filter(s=>s.specialist.toLowerCase().includes(fS));
+    if(fC)sessions=sessions.filter(s=>s.coach.toLowerCase().includes(fC));
+    if(fL)sessions=sessions.filter(s=>(s.loggedBy?.name||'').toLowerCase().includes(fL)||(s.loggedBy?.email||'').toLowerCase().includes(fL));
+    if(fK)sessions=sessions.filter(s=>s.kpi===fK);
+    if(fT)sessions=sessions.filter(s=>s.tool===fT);
+    if(fO)sessions=sessions.filter(s=>s.outcome===fO);
+    sessions.sort((a,b)=>b.date.localeCompare(a.date));
+    document.getElementById('sessions-count').textContent=`Showing ${sessions.length} session${sessions.length!==1?'s':''}`;
+    const tbody=document.getElementById('sessions-table');
+    if(!sessions.length){tbody.innerHTML='<tr><td colspan="13"><div style="text-align:center;padding:2rem;color:#94A3B8">No sessions match your filters.</div></td></tr>';return;}
+    tbody.innerHTML=sessions.map(s=>{
+        const l=lift(s);
+        const liftHtml=l===null?'—':`<span class="${l>0?'trend-up':l<0?'trend-down':'trend-flat'}">${l>=0?'+':''}${l.toFixed(1)}%</span>`;
+        const rc=s.rootCause?s.rootCause.slice(0,55)+(s.rootCause.length>55?'…':''):'—';
+        const lb=s.loggedBy?`<span class="logged-by">👤 ${s.loggedBy.name}</span>`:'—';
+        return`<tr><td style="white-space:nowrap">${fmtDate(s.date)}</td><td><strong>${s.specialist}</strong></td><td>${s.coach}</td><td><span class="badge ${KPI_BADGE[s.kpi]||'badge-csat'}">${s.kpi}</span></td><td>${s.baseline!==null?s.baseline:'—'}</td><td>${s.current!==null?`<strong>${s.current}</strong>`:'—'}</td><td>${s.target!==null?s.target:'—'}</td><td>${liftHtml}</td><td style="white-space:nowrap">${TOOL_SHORT[s.tool]||s.tool}</td><td><span class="badge ${OUT_BADGE[s.outcome]||''}">${s.outcome}</span></td><td>${lb}</td><td style="max-width:180px;font-size:0.78rem;color:#64748B">${rc}</td><td><button class="btn-icon" onclick="deleteSession(${s.id})" title="Delete">🗑️</button></td></tr>`;
+    }).join('');
+}
+
+function deleteSession(id){
+    if(!confirm('Delete this session? This cannot be undone.'))return;
+    save(load().filter(s=>s.id!==id));
+    renderSessionsTable();
+    showToast('🗑️ Session deleted');
+}
+function clearFilters(){
+    ['filter-specialist','filter-coach','filter-loggedby'].forEach(id=>document.getElementById(id).value='');
+    ['filter-kpi','filter-tool','filter-outcome'].forEach(id=>document.getElementById(id).value='');
+    renderSessionsTable();
+}
+
+// ─── WOW ─────────────────────────────────────────────────
+function setWowPeriod(n,btn){ wowPeriod=n; document.querySelectorAll('#page-wow .period-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderWoW(); }
+
+function renderWoW(){
+    let sessions=load().sort((a,b)=>a.date.localeCompare(b.date));
+    if(!sessions.length) return;
+
+    // Build weekly buckets
+    const weekMap={};
+    sessions.forEach(s=>{
+        const wk=weekKey(s.date),wl=weekLabel(s.date);
+        if(!weekMap[wk])weekMap[wk]={key:wk,label:'Wk '+wl,sessions:[],specialists:new Set()};
+        weekMap[wk].sessions.push(s);
+        weekMap[wk].specialists.add(s.specialist);
+    });
+
+    let weeks=Object.values(weekMap).sort((a,b)=>a.key.localeCompare(b.key));
+    if(wowPeriod>0) weeks=weeks.slice(-wowPeriod);
+
+    // Summary: current vs prev week
+    const cur=weeks[weeks.length-1];
+    const prev=weeks.length>=2?weeks[weeks.length-2]:null;
+    const curImpr=cur.sessions.filter(s=>s.outcome==='Improved').length;
+    const curRate=Math.round(curImpr/cur.sessions.length*100);
+    const prevRate=prev?Math.round(prev.sessions.filter(s=>s.outcome==='Improved').length/prev.sessions.length*100):null;
+    const deltaS=prev?cur.sessions.length-prev.sessions.length:null;
+    const deltaR=prevRate!==null?curRate-prevRate:null;
+
+    document.getElementById('wow-stats').innerHTML=`
+        <div class="stat-card"><div class="stat-icon" style="background:#EDE9FE">📋</div><div><div class="stat-value" style="color:#7C3AED">${cur.sessions.length}</div><div class="stat-label">Sessions This Week${deltaS!==null?`<span class="stat-delta ${deltaS>=0?'delta-up':'delta-down'}"> (${deltaS>=0?'+':''}${deltaS} WoW)</span>`:''}</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#D1FAE5">✅</div><div><div class="stat-value" style="color:#047857">${curRate}%</div><div class="stat-label">Improvement Rate This Week${deltaR!==null?`<span class="stat-delta ${deltaR>=0?'delta-up':'delta-down'}"> (${deltaR>=0?'+':''}${deltaR}pp WoW)</span>`:''}</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#DBEAFE">👥</div><div><div class="stat-value" style="color:#1D4ED8">${cur.specialists.size}</div><div class="stat-label">Specialists Coached This Week</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#FEF9C3">🔧</div><div><div class="stat-value" style="color:#B45309;font-size:1rem">${topTool(cur.sessions)}</div><div class="stat-label">Top Tool This Week</div></div></div>
+    `;
+
+    const labels=weeks.map(w=>w.label);
+    const counts=weeks.map(w=>w.sessions.length);
+    const rates=weeks.map(w=>Math.round(w.sessions.filter(s=>s.outcome==='Improved').length/w.sessions.length*100));
+
+    destroyChart('wowMain');
+    charts['wowMain']=new Chart(document.getElementById('chartWowMain'),{
+        data:{labels,datasets:[
+            {type:'bar',label:'Sessions',data:counts,backgroundColor:'rgba(79,70,229,0.25)',borderColor:'#4F46E5',borderWidth:1.5,borderRadius:6,yAxisID:'y'},
+            {type:'line',label:'Improvement Rate %',data:rates,borderColor:'#10B981',backgroundColor:'rgba(16,185,129,0.08)',tension:0.4,pointBackgroundColor:'#10B981',pointRadius:4,yAxisID:'y2'}
+        ]},
+        options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top'}},scales:{y:{grid:{color:'#F1F5F9'},beginAtZero:true,title:{display:true,text:'Sessions',color:'#64748B'}},y2:{position:'right',grid:{display:false},ticks:{callback:v=>v+'%'},max:100,beginAtZero:true,title:{display:true,text:'Impr. Rate %',color:'#10B981'}}}}
+    });
+
+    // Stacked outcomes
+    const outKeys=['Improved','No Change','Needs Follow-up'];
+    const outColors=['#10B981','#F59E0B','#EF4444'];
+    destroyChart('wowOutcomes');
+    charts['wowOutcomes']=new Chart(document.getElementById('chartWowOutcomes'),{
+        type:'bar',
+        data:{labels,datasets:outKeys.map((o,i)=>({label:o,data:weeks.map(w=>w.sessions.filter(s=>s.outcome===o).length),backgroundColor:outColors[i],borderRadius:i===outKeys.length-1?[0,0,6,6]:0}))},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:'#F1F5F9'}}}}
+    });
+
+    // Stacked KPI
+    const kpiKeys=['CSAT','QA Score','FCR','TPH'];
+    const kpiColors=['#7C3AED','#2563EB','#047857','#D97706'];
+    destroyChart('wowKPI');
+    charts['wowKPI']=new Chart(document.getElementById('chartWowKPI'),{
+        type:'bar',
+        data:{labels,datasets:kpiKeys.map((k,i)=>({label:k,data:weeks.map(w=>w.sessions.filter(s=>s.kpi===k).length),backgroundColor:kpiColors[i],borderRadius:i===kpiKeys.length-1?[0,0,6,6]:0}))},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:'#F1F5F9'}}}}
+    });
+
+    // Table
+    const tbody=document.getElementById('wow-table');
+    tbody.innerHTML=weeks.slice().reverse().map((w,i,arr)=>{
+        const prev2=arr[i+1];
+        const impr=w.sessions.filter(s=>s.outcome==='Improved').length;
+        const nc=w.sessions.filter(s=>s.outcome==='No Change').length;
+        const fu=w.sessions.filter(s=>s.outcome==='Needs Follow-up').length;
+        const rate=Math.round(impr/w.sessions.length*100);
+        const lifts=w.sessions.map(s=>lift(s)).filter(l=>l!==null);
+        const avgLift=lifts.length?+(lifts.reduce((a,b)=>a+b,0)/lifts.length).toFixed(1):null;
+        const deltaWoW=prev2?w.sessions.length-prev2.sessions.length:null;
+        return`<tr>
+            <td><strong>${w.label}</strong></td>
+            <td class="num">${w.sessions.length}</td>
+            <td class="num">${deltaWoW===null?'—':`<span class="${deltaWoW>0?'trend-up':deltaWoW<0?'trend-down':'trend-flat'}">${deltaWoW>0?'+':''}${deltaWoW}</span>`}</td>
+            <td class="num">${impr}</td><td class="num">${nc}</td><td class="num">${fu}</td>
+            <td class="num"><strong>${rate}%</strong></td>
+            <td class="num">${avgLift!==null?`<span class="${avgLift>0?'trend-up':'trend-flat'}">${avgLift>0?'+':''}${avgLift}%</span>`:'—'}</td>
+            <td>${topTool(w.sessions)}</td>
+            <td class="num">${w.specialists.size}</td>
+        </tr>`;
+    }).join('');
+}
+
+// ─── MOM ─────────────────────────────────────────────────
+function setMomPeriod(n,btn){ momPeriod=n; document.querySelectorAll('#page-mom .period-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderMoM(); }
+
+function renderMoM(){
+    let sessions=load().sort((a,b)=>a.date.localeCompare(b.date));
+    if(!sessions.length) return;
+
+    const monthMap={};
+    sessions.forEach(s=>{
+        const mk=monthKey(s.date);
+        if(!monthMap[mk])monthMap[mk]={key:mk,label:monthLabel(mk),sessions:[],specialists:new Set(),coaches:new Set()};
+        monthMap[mk].sessions.push(s);
+        monthMap[mk].specialists.add(s.specialist);
+        monthMap[mk].coaches.add(s.coach);
+    });
+
+    let months=Object.values(monthMap).sort((a,b)=>a.key.localeCompare(b.key));
+    if(momPeriod>0) months=months.slice(-momPeriod);
+
+    // Track new specialists (first ever appearance)
+    const seenSp=new Set();
+    const newSpPerMonth={};
+    Object.values(monthMap).sort((a,b)=>a.key.localeCompare(b.key)).forEach(m=>{
+        let n=0;
+        m.specialists.forEach(sp=>{ if(!seenSp.has(sp)){seenSp.add(sp);n++;} });
+        newSpPerMonth[m.key]=n;
+    });
+
+    // Stats: current vs prev month
+    const cur=months[months.length-1];
+    const prev=months.length>=2?months[months.length-2]:null;
+    const curImpr=cur.sessions.filter(s=>s.outcome==='Improved').length;
+    const curRate=Math.round(curImpr/cur.sessions.length*100);
+    const prevRate=prev?Math.round(prev.sessions.filter(s=>s.outcome==='Improved').length/prev.sessions.length*100):null;
+    const deltaS=prev?cur.sessions.length-prev.sessions.length:null;
+    const deltaR=prevRate!==null?curRate-prevRate:null;
+    const lifts=cur.sessions.map(s=>lift(s)).filter(l=>l!==null);
+    const avgL=lifts.length?+(lifts.reduce((a,b)=>a+b,0)/lifts.length).toFixed(1):null;
+
+    document.getElementById('mom-stats').innerHTML=`
+        <div class="stat-card"><div class="stat-icon" style="background:#EDE9FE">📋</div><div><div class="stat-value" style="color:#7C3AED">${cur.sessions.length}</div><div class="stat-label">Sessions This Month${deltaS!==null?`<span class="stat-delta ${deltaS>=0?'delta-up':'delta-down'}"> (${deltaS>=0?'+':''}${deltaS} MoM)</span>`:''}</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#D1FAE5">✅</div><div><div class="stat-value" style="color:#047857">${curRate}%</div><div class="stat-label">Improvement Rate${deltaR!==null?`<span class="stat-delta ${deltaR>=0?'delta-up':'delta-down'}"> (${deltaR>=0?'+':''}${deltaR}pp MoM)</span>`:''}</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#DBEAFE">📈</div><div><div class="stat-value" style="color:#1D4ED8">${avgL!==null?'+'+avgL+'%':'—'}</div><div class="stat-label">Avg KPI Lift Per Session</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#FEF9C3">👥</div><div><div class="stat-value" style="color:#B45309">${cur.specialists.size}</div><div class="stat-label">Specialists Coached</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#FCE7F3">🆕</div><div><div class="stat-value" style="color:#9D174D">${newSpPerMonth[cur.key]||0}</div><div class="stat-label">New Specialists Onboarded</div></div></div>
+    `;
+
+    const labels=months.map(m=>m.label);
+    const counts=months.map(m=>m.sessions.length);
+    const rates=months.map(m=>Math.round(m.sessions.filter(s=>s.outcome==='Improved').length/m.sessions.length*100));
+
+    destroyChart('momMain');
+    charts['momMain']=new Chart(document.getElementById('chartMomMain'),{
+        data:{labels,datasets:[
+            {type:'bar',label:'Sessions',data:counts,backgroundColor:'rgba(79,70,229,0.25)',borderColor:'#4F46E5',borderWidth:1.5,borderRadius:6,yAxisID:'y'},
+            {type:'line',label:'Improvement Rate %',data:rates,borderColor:'#10B981',backgroundColor:'rgba(16,185,129,0.08)',tension:0.4,pointBackgroundColor:'#10B981',pointRadius:5,yAxisID:'y2'}
+        ]},
+        options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top'}},scales:{y:{grid:{color:'#F1F5F9'},beginAtZero:true,title:{display:true,text:'Sessions',color:'#64748B'}},y2:{position:'right',grid:{display:false},ticks:{callback:v=>v+'%'},max:100,beginAtZero:true,title:{display:true,text:'Impr. Rate %',color:'#10B981'}}}}
+    });
+
+    // Tool mix stacked
+    const toolKeys=Object.keys(TOOL_SHORT);
+    const toolColors=['#7C3AED','#2563EB','#047857','#D97706'];
+    destroyChart('momTools');
+    charts['momTools']=new Chart(document.getElementById('chartMomTools'),{
+        type:'bar',
+        data:{labels,datasets:toolKeys.map((t,i)=>({label:TOOL_SHORT[t],data:months.map(m=>m.sessions.filter(s=>s.tool===t).length),backgroundColor:toolColors[i],borderRadius:i===toolKeys.length-1?[0,0,6,6]:0}))},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10}}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:'#F1F5F9'}}}}
+    });
+
+    // KPI mix stacked
+    const kpiKeys=['CSAT','QA Score','FCR','TPH'];
+    const kpiColors=['#7C3AED','#2563EB','#047857','#D97706'];
+    destroyChart('momKPI');
+    charts['momKPI']=new Chart(document.getElementById('chartMomKPI'),{
+        type:'bar',
+        data:{labels,datasets:kpiKeys.map((k,i)=>({label:k,data:months.map(m=>m.sessions.filter(s=>s.kpi===k).length),backgroundColor:kpiColors[i],borderRadius:i===kpiKeys.length-1?[0,0,6,6]:0}))},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:'#F1F5F9'}}}}
+    });
+
+    // Table
+    const tbody=document.getElementById('mom-table');
+    tbody.innerHTML=months.slice().reverse().map((m,i,arr)=>{
+        const prev2=arr[i+1];
+        const impr=m.sessions.filter(s=>s.outcome==='Improved').length;
+        const rate=Math.round(impr/m.sessions.length*100);
+        const lifts2=m.sessions.map(s=>lift(s)).filter(l=>l!==null);
+        const al=lifts2.length?+(lifts2.reduce((a,b)=>a+b,0)/lifts2.length).toFixed(1):null;
+        const deltaM=prev2?m.sessions.length-prev2.sessions.length:null;
+        const kpiC2={};m.sessions.forEach(s=>{kpiC2[s.kpi]=(kpiC2[s.kpi]||0)+1;});
+        const topK=Object.entries(kpiC2).sort((a,b)=>b[1]-a[1])[0];
+        return`<tr>
+            <td><strong>${m.label}</strong></td>
+            <td class="num">${m.sessions.length}</td>
+            <td class="num">${deltaM===null?'—':`<span class="${deltaM>0?'trend-up':deltaM<0?'trend-down':'trend-flat'}">${deltaM>0?'+':''}${deltaM}</span>`}</td>
+            <td class="num">${impr}</td>
+            <td class="num"><strong>${rate}%</strong></td>
+            <td class="num">${al!==null?`<span class="${al>0?'trend-up':'trend-flat'}">${al>0?'+':''}${al}%</span>`:'—'}</td>
+            <td>${topK?`<span class="badge ${KPI_BADGE[topK[0]]||'badge-csat'}">${topK[0]}</span>`:'—'}</td>
+            <td>${topTool(m.sessions)}</td>
+            <td class="num">${newSpPerMonth[m.key]||0}</td>
+            <td class="num">${m.coaches.size}</td>
+        </tr>`;
+    }).join('');
+}
+
+// ─── EXPORT CSV ───────────────────────────────────────────
+function exportCSV(){
+    const sessions=load();
+    if(!sessions.length){showToast('⚠️ No data to export','#F59E0B');return;}
+    const headers=['Date','Specialist','Coach','KPI','Baseline','Current','Target','KPI Lift %','Tool','Outcome','Root Cause','Notes','Logged By Name','Logged By Email'];
+    const rows=sessions.map(s=>{
+        const l=lift(s);
+        return[s.date,s.specialist,s.coach,s.kpi,s.baseline??'',s.current??'',s.target??'',l!==null?l.toFixed(2):'',s.tool,s.outcome,s.rootCause,s.notes,s.loggedBy?.name||'',s.loggedBy?.email||''].map(v=>`"${String(v).replace(/"/g,'""')}"`);
+    });
+    const csv=[headers,...rows].map(r=>r.join(',')).join('\n');
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+    a.download=`coaching_sessions_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    showToast('⬇️ CSV exported!');
+}
+
+// ─── TOAST ────────────────────────────────────────────────
+function showToast(msg,color='#10B981'){
+    const t=document.getElementById('toast');
+    t.textContent=msg; t.style.background=color;
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ─── INIT ─────────────────────────────────────────────────
+function initApp(){
+    renderNavUser();
+    initSample();
+    updateDatalistsFromSessions();
+    renderDashboard();
+}
+
+// Check login state on load
+(function(){
+    const u=getUser();
+    if(u){ document.getElementById('login-overlay').style.display='none'; initApp(); }
+})();
+</script>
+</body>
+</html>
