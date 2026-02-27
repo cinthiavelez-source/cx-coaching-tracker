@@ -163,6 +163,25 @@
         .chip-input:disabled{opacity:0.6;cursor:not-allowed;}
         .admin-list-desc{font-size:0.78rem;color:#94A3B8;margin-bottom:0.75rem;}
         .admin-role-badge{display:inline-flex;align-items:center;gap:0.35rem;background:#EDE9FE;color:#6D28D9;border-radius:9999px;padding:0.25rem 0.75rem;font-size:0.75rem;font-weight:700;}
+
+        /* ── EDIT MODAL ── */
+        .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:5000;backdrop-filter:blur(2px);}
+        .modal-box{background:white;border-radius:1.25rem;padding:2rem;width:min(720px,96vw);max-height:90vh;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,0.25);}
+        .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;}
+        .modal-header h2{font-size:1.1rem;font-weight:700;color:#1E293B;}
+        .modal-close{background:none;border:none;cursor:pointer;font-size:1.4rem;color:#94A3B8;padding:0.2rem 0.5rem;line-height:1;border-radius:0.35rem;transition:color 0.15s;}
+        .modal-close:hover{color:#1E293B;}
+
+        /* ── ADMIN TABS ── */
+        .admin-tabs{display:flex;border-bottom:2px solid #E2E8F0;margin-bottom:1.75rem;}
+        .admin-tab-btn{background:none;border:none;cursor:pointer;padding:0.65rem 1.4rem;font-size:0.875rem;font-weight:600;color:#64748B;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all 0.2s;font-family:inherit;border-radius:0.35rem 0.35rem 0 0;}
+        .admin-tab-btn:hover{color:#4F46E5;background:#F5F3FF;}
+        .admin-tab-btn.active{color:#4F46E5;border-bottom-color:#4F46E5;}
+
+        /* ── ROLE BADGES ── */
+        .role-badge-admin{display:inline-flex;align-items:center;background:#EDE9FE;color:#6D28D9;border-radius:9999px;padding:0.2rem 0.65rem;font-size:0.72rem;font-weight:700;}
+        .role-badge-coach{display:inline-flex;align-items:center;background:#DBEAFE;color:#1D4ED8;border-radius:9999px;padding:0.2rem 0.65rem;font-size:0.72rem;font-weight:700;}
+        .roles-table-wrap{overflow-x:auto;}
     </style>
 </head>
 <body>
@@ -233,7 +252,7 @@
             <button class="nav-btn" data-page="sessions" onclick="navTo('sessions')">📋 Sessions Log</button>
             <button class="nav-btn" data-page="wow" onclick="navTo('wow')">📅 Week over Week</button>
             <button class="nav-btn" data-page="mom" onclick="navTo('mom')">📆 Month over Month</button>
-            <button id="btn-admin" class="nav-btn" data-page="admin" onclick="navTo('admin')" style="display:none">⚙️ Manage Lists</button>
+            <button id="btn-admin" class="nav-btn" data-page="admin" onclick="navTo('admin')" style="display:none">⚙️ Admin</button>
         </div>
     </div>
     <div class="navbar-right" id="navbar-right">
@@ -441,24 +460,62 @@
         </div>
     </div>
 
-    <!-- ── ADMIN — MANAGE LISTS ── -->
+    <!-- ── ADMIN ── -->
     <div id="page-admin" class="page">
         <div class="header-actions">
             <div class="page-header" style="margin-bottom:0">
-                <h1>⚙️ Manage Lists</h1>
-                <p>Edit all dropdown options — changes save to Google Sheets instantly and apply to every coach immediately.</p>
+                <h1>⚙️ Admin</h1>
+                <p>Manage dropdown lists and user roles — changes sync to Google Sheets instantly.</p>
             </div>
             <span class="admin-role-badge">🔐 Admin Only</span>
         </div>
-        <div class="info-strip">
-            <span class="icon">💡</span>
-            <span>Add or remove items from any list using the chip editors below. Removing an item does <strong>not</strong> affect sessions already logged with that value — it only removes it from the dropdown for future sessions.</span>
-        </div>
-        <div id="admin-lists-container"></div>
+        <div id="admin-content"></div>
     </div>
 
 </div><!-- /main -->
 <div id="toast" class="toast"></div>
+
+<!-- ════ EDIT SESSION MODAL ════ -->
+<div id="edit-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeEditModal()">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2>✏️ Edit Session</h2>
+            <button class="modal-close" onclick="closeEditModal()">✕</button>
+        </div>
+        <form id="edit-form" novalidate>
+            <input type="hidden" id="e-id">
+            <div class="form-grid">
+                <div class="form-group"><label>📅 Session Date *</label><input type="date" id="e-date" required></div>
+                <div class="form-group"><label>👤 Specialist Name *</label><input type="text" id="e-specialist" required list="list-specialists" autocomplete="off"></div>
+                <div class="form-group"><label>🎓 Coach / Supervisor *</label><input type="text" id="e-coach" required list="list-coaches" autocomplete="off"></div>
+                <div class="form-group"><label>🤝 Coaching Dynamic *</label>
+                    <select id="e-dynamic" required><option value="">Select dynamic…</option></select>
+                </div>
+                <div class="form-group"><label>🎯 KPI Coached *</label>
+                    <select id="e-kpi" required><option value="">Select KPI…</option></select>
+                </div>
+                <div class="form-group"><label>📉 KPI Baseline</label><input type="number" id="e-baseline" placeholder="e.g. 72" step="0.1" min="0"></div>
+                <div class="form-group"><label>🏁 KPI Target</label><input type="number" id="e-target" placeholder="e.g. 85" step="0.1" min="0"></div>
+                <div class="form-group"><label>📊 Current KPI Score</label><input type="number" id="e-current" placeholder="e.g. 78" step="0.1" min="0"></div>
+                <div class="form-group"><label>🔍 Root Cause Coached *</label>
+                    <select id="e-rootcause" required><option value="">Select root cause…</option></select>
+                </div>
+                <div class="form-group"><label>🔧 Tool Used *</label>
+                    <select id="e-tool" required><option value="">Select tool…</option></select>
+                </div>
+                <div class="form-group"><label>✅ Session Outcome *</label>
+                    <select id="e-outcome" required><option value="">Select outcome…</option></select>
+                </div>
+                <div class="form-group full-width"><label>📝 Session Notes &amp; Next Steps</label><textarea id="e-notes"></textarea></div>
+            </div>
+            <div id="edit-error" style="color:#EF4444;font-size:0.85rem;margin-top:1rem;display:none;"></div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                <button type="submit" id="edit-save-btn" class="btn btn-primary">💾 Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 <!-- ════ SCRIPT ════ -->
 <script>
@@ -683,10 +740,28 @@ async function apiAdd(session){
 async function apiDelete(id){
     showLoading(true, 'Deleting…');
     try {
+        const u = getUser();
         const res = await fetch(scriptUrl(),{
             method:'POST',
             headers:{'Content-Type':'text/plain;charset=utf-8'},
-            body:JSON.stringify({action:'delete',id}),
+            body:JSON.stringify({action:'delete', id, email:u?.email||''}),
+            redirect:'follow'
+        });
+        const data = await res.json();
+        if(data.error) throw new Error(data.error);
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function apiUpdateSession(session){
+    showLoading(true, 'Updating…');
+    try {
+        const u = getUser();
+        const res = await fetch(scriptUrl(),{
+            method:'POST',
+            headers:{'Content-Type':'text/plain;charset=utf-8'},
+            body:JSON.stringify({action:'updateSession', session, email:u?.email||''}),
             redirect:'follow'
         });
         const data = await res.json();
@@ -750,11 +825,19 @@ function updateDataLists(){
 // ─── DROPDOWN POPULATION ─────────────────────────────────
 function populateDropdowns(){
     const c = cachedConfig;
+    // Log form selects
     fillSelect('f-dynamic',   c.dynamics,   'Select dynamic…');
     fillSelect('f-kpi',       c.kpis,       'Select KPI…');
     fillSelect('f-rootcause', c.rootCauses, 'Select root cause…');
     fillSelect('f-tool',      c.tools,      'Select tool…');
     fillSelect('f-outcome',   c.outcomes,   'Select outcome…');
+    // Edit modal selects
+    fillSelect('e-dynamic',   c.dynamics,   'Select dynamic…');
+    fillSelect('e-kpi',       c.kpis,       'Select KPI…');
+    fillSelect('e-rootcause', c.rootCauses, 'Select root cause…');
+    fillSelect('e-tool',      c.tools,      'Select tool…');
+    fillSelect('e-outcome',   c.outcomes,   'Select outcome…');
+    // Filter selects
     fillFilterSelect('filter-dynamic', c.dynamics,   'All Dynamics');
     fillFilterSelect('filter-kpi',     c.kpis,       'All KPIs');
     fillFilterSelect('filter-rc',      c.rootCauses, 'All Root Causes');
@@ -992,6 +1075,20 @@ function renderSpecialistProgress(sessions){
     }).join('');
 }
 
+// ─── ROLE HELPERS ─────────────────────────────────────────
+function isCurrentUserAdmin(){
+    const u = getUser();
+    return cachedRole === 'admin' || (u && u.email.toLowerCase() === DEFAULT_ADMIN_EMAIL.toLowerCase());
+}
+
+function canEditSession(session){
+    const u = getUser();
+    if(!u) return false;
+    if(isCurrentUserAdmin()) return true;
+    if(cachedRole === 'coach' && session.loggedBy?.email?.toLowerCase() === u.email.toLowerCase()) return true;
+    return false;
+}
+
 // ─── SESSIONS TABLE ───────────────────────────────────────
 function renderSessionsTable(sessions){
     let s=[...sessions];
@@ -1033,7 +1130,7 @@ function renderSessionsTable(sessions){
             <td style="white-space:nowrap;font-size:0.78rem">${TOOL_SHORT[x.tool]||x.tool}</td>
             <td><span class="badge ${OUT_BADGE[x.outcome]||''}">${x.outcome}</span></td>
             <td>${lb}</td>
-            <td><button class="btn-icon" onclick="deleteSession('${x.id}')" title="Delete">🗑️</button></td>
+            <td style="white-space:nowrap">${canEditSession(x)?`<button class="btn-icon" onclick="editSession('${x.id}')" title="Edit">✏️</button> <button class="btn-icon" onclick="deleteSession('${x.id}')" title="Delete">🗑️</button>`:'—'}</td>
         </tr>`;
     }).join('');
 }
@@ -1047,6 +1144,71 @@ async function deleteSession(id){
         renderPage(currentPage, sessions);
     } catch(err){ showToast('❌ Delete failed: '+err.message,'#EF4444'); }
 }
+
+// ─── EDIT SESSION ─────────────────────────────────────────
+function editSession(id){
+    const s = cachedSessions.find(x=>String(x.id)===String(id));
+    if(!s) return;
+    document.getElementById('e-id').value        = s.id;
+    document.getElementById('e-date').value      = String(s.date).split('T')[0];
+    document.getElementById('e-specialist').value= s.specialist||'';
+    document.getElementById('e-coach').value     = s.coach||'';
+    document.getElementById('e-dynamic').value   = s.dynamic||'';
+    document.getElementById('e-kpi').value       = s.kpi||'';
+    document.getElementById('e-baseline').value  = s.baseline!==null&&s.baseline!==undefined ? s.baseline : '';
+    document.getElementById('e-target').value    = s.target  !==null&&s.target  !==undefined ? s.target   : '';
+    document.getElementById('e-current').value   = s.current !==null&&s.current !==undefined ? s.current  : '';
+    document.getElementById('e-rootcause').value = s.rootCause||'';
+    document.getElementById('e-tool').value      = s.tool||'';
+    document.getElementById('e-outcome').value   = s.outcome||'';
+    document.getElementById('e-notes').value     = s.notes||'';
+    document.getElementById('edit-error').style.display = 'none';
+    document.getElementById('edit-modal').style.display = 'flex';
+}
+
+function closeEditModal(){
+    document.getElementById('edit-modal').style.display = 'none';
+}
+
+document.getElementById('edit-form').addEventListener('submit', async function(e){
+    e.preventDefault();
+    const errEl = document.getElementById('edit-error');
+    errEl.style.display = 'none';
+    const required = ['e-date','e-specialist','e-coach','e-dynamic','e-kpi','e-rootcause','e-tool','e-outcome'];
+    if(required.some(id=>!document.getElementById(id).value.trim())){
+        errEl.textContent='⚠️ Please fill in all required fields.';
+        errEl.style.display='block'; return;
+    }
+    const saveBtn = document.getElementById('edit-save-btn');
+    saveBtn.disabled=true; saveBtn.textContent='💾 Saving…';
+    const origId = document.getElementById('e-id').value;
+    const orig   = cachedSessions.find(x=>String(x.id)===String(origId));
+    try{
+        await apiUpdateSession({
+            id:        origId,
+            date:      document.getElementById('e-date').value,
+            specialist:document.getElementById('e-specialist').value.trim(),
+            coach:     document.getElementById('e-coach').value.trim(),
+            dynamic:   document.getElementById('e-dynamic').value,
+            kpi:       document.getElementById('e-kpi').value,
+            baseline:  pfn('e-baseline'), target:pfn('e-target'), current:pfn('e-current'),
+            rootCause: document.getElementById('e-rootcause').value,
+            tool:      document.getElementById('e-tool').value,
+            outcome:   document.getElementById('e-outcome').value,
+            notes:     document.getElementById('e-notes').value.trim(),
+            loggedBy:  orig?.loggedBy || getUser() || {name:'Unknown',email:''}
+        });
+        showToast('✅ Session updated!');
+        closeEditModal();
+        const sessions = await apiFetch(true);
+        renderPage(currentPage, sessions);
+    } catch(err){
+        errEl.textContent='❌ Failed: '+err.message;
+        errEl.style.display='block';
+    } finally{
+        saveBtn.disabled=false; saveBtn.textContent='💾 Save Changes';
+    }
+});
 
 function clearFilters(){
     ['filter-specialist','filter-coach','filter-loggedby'].forEach(id=>document.getElementById(id).value='');
@@ -1153,7 +1315,7 @@ function renderMoM(sessions){
     }).join('');
 }
 
-// ─── ADMIN — MANAGE LISTS ────────────────────────────────
+// ─── ADMIN — TABS ─────────────────────────────────────────
 const ADMIN_LISTS = [
     {key:'dynamics',   name:'Coaching Dynamics',  icon:'🤝', desc:'Options in the Coaching Dynamic dropdown'},
     {key:'kpis',       name:'KPIs',               icon:'🎯', desc:'Options in the KPI Coached dropdown'},
@@ -1162,8 +1324,35 @@ const ADMIN_LISTS = [
     {key:'tools',      name:'Coaching Tools',      icon:'🔧', desc:'Options in the Tool Used dropdown (sorted alphabetically)'},
 ];
 
+let adminTab = 'lists'; // 'lists' | 'roles'
+
 function renderAdminPage(){
+    document.getElementById('admin-content').innerHTML = `
+        <div class="admin-tabs">
+            <button class="admin-tab-btn ${adminTab==='lists'?'active':''}" onclick="switchAdminTab('lists')">📝 Manage Lists</button>
+            <button class="admin-tab-btn ${adminTab==='roles'?'active':''}" onclick="switchAdminTab('roles')">👥 Manage Roles</button>
+        </div>
+        <div id="admin-tab-content"></div>
+    `;
+    if(adminTab === 'lists') renderManageLists();
+    else renderManageRolesContent();
+}
+
+function switchAdminTab(tab){
+    adminTab = tab;
+    renderAdminPage();
+}
+
+// ── Manage Lists tab ──
+function renderManageLists(){
     const c = cachedConfig;
+    document.getElementById('admin-tab-content').innerHTML = `
+        <div class="info-strip" style="margin-bottom:1.5rem">
+            <span class="icon">💡</span>
+            <span>Add or remove items from any list. Removing an item does <strong>not</strong> affect sessions already logged — it only removes it from the dropdown for future sessions.</span>
+        </div>
+        <div id="admin-lists-container"></div>
+    `;
     document.getElementById('admin-lists-container').innerHTML = ADMIN_LISTS.map(l=>`
         <div class="card" style="margin-bottom:1.25rem">
             <div class="card-title">${l.icon} ${l.name}</div>
@@ -1204,7 +1393,7 @@ async function adminAddItem(listKey){
         cachedConfig[listKey] = newList;
         populateDropdowns();
         input.value = '';
-        renderAdminPage();
+        renderManageLists();
         document.getElementById(`chip-input-${listKey}`).focus();
         showToast(`✅ Added "${val}" to ${listKey}`);
     } catch(err){
@@ -1221,7 +1410,7 @@ async function adminRemoveItem(listKey, value){
         await apiUpdateConfig(listKey, newList);
         cachedConfig[listKey] = newList;
         populateDropdowns();
-        renderAdminPage();
+        renderManageLists();
         showToast(`🗑️ Removed "${value}"`);
     } catch(err){
         showToast('❌ Failed to remove: '+err.message,'#EF4444');
@@ -1234,6 +1423,115 @@ async function apiUpdateConfig(key, values){
         method:  'POST',
         headers: {'Content-Type':'text/plain;charset=utf-8'},
         body:    JSON.stringify({action:'updateConfig', email:u?.email||'', key, values}),
+        redirect:'follow'
+    });
+    const data = await res.json();
+    if(data.error) throw new Error(data.error);
+    return data;
+}
+
+// ── Manage Roles tab ──
+let cachedRoles = null;
+
+async function renderManageRolesContent(){
+    const container = document.getElementById('admin-tab-content');
+    container.innerHTML = '<div style="padding:2.5rem;text-align:center;color:#94A3B8"><div style="font-size:2rem;margin-bottom:0.75rem">⏳</div>Loading roles…</div>';
+    try {
+        cachedRoles = await apiGetRoles();
+        renderRolesTable();
+    } catch(err){
+        container.innerHTML = `<div style="color:#EF4444;padding:1.25rem;background:#FEF2F2;border-radius:0.75rem">❌ ${escHtml(err.message)}</div>`;
+    }
+}
+
+function renderRolesTable(){
+    const container = document.getElementById('admin-tab-content');
+    const roles = cachedRoles || [];
+    container.innerHTML = `
+        <div class="info-strip" style="margin-bottom:1.5rem">
+            <span class="icon">💡</span>
+            <span>Assign <strong>Coach</strong> to allow editing their own sessions. Assign <strong>Admin</strong> for full access — managing lists, roles, and all sessions. Users without a role are <em>Viewers</em> (read-only).</span>
+        </div>
+        <div class="card" style="margin-bottom:1.25rem">
+            <div class="card-title">➕ Assign Role</div>
+            <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end">
+                <div class="form-group" style="flex:2;min-width:220px;margin-bottom:0">
+                    <label>Email Address</label>
+                    <input type="email" id="role-email-input" placeholder="name@cookunity.com"
+                        onkeydown="if(event.key==='Enter'){event.preventDefault();addRole();}">
+                </div>
+                <div class="form-group" style="flex:1;min-width:140px;margin-bottom:0">
+                    <label>Role</label>
+                    <select id="role-select">
+                        <option value="coach">🎓 Coach</option>
+                        <option value="admin">🔐 Admin</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" style="margin-bottom:0.4rem;white-space:nowrap" onclick="addRole()">＋ Assign</button>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">👥 Current Role Assignments</div>
+            ${roles.length ? `
+            <div class="roles-table-wrap">
+                <table>
+                    <thead><tr><th>Email</th><th>Role</th><th>Assigned By</th><th>Assigned Date</th><th></th></tr></thead>
+                    <tbody>
+                        ${roles.map(r=>`
+                        <tr>
+                            <td style="font-size:0.875rem">${escHtml(r.email)}</td>
+                            <td><span class="role-badge-${r.role}">${r.role==='admin'?'🔐 Admin':'🎓 Coach'}</span></td>
+                            <td style="font-size:0.8rem;color:#64748B">${escHtml(r.assignedBy||'—')}</td>
+                            <td style="font-size:0.8rem;color:#64748B">${r.assignedDate?new Date(r.assignedDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—'}</td>
+                            <td><button class="btn-icon" onclick="removeRole('${escHtml(r.email).replace(/'/g,"&#39;")}')" title="Remove role">🗑️</button></td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>
+            </div>` : `<div class="empty-state" style="padding:2.5rem"><div class="ei">👥</div><p>No roles assigned yet.<br><span style="font-size:0.8rem">Add a coach or admin using the form above.</span></p></div>`}
+        </div>
+    `;
+}
+
+async function apiGetRoles(){
+    const u   = getUser();
+    const url = `${scriptUrl()}?action=getRoles&email=${encodeURIComponent(u?.email||'')}`;
+    const res = await fetch(url, {redirect:'follow'});
+    const data = await res.json();
+    if(data.error) throw new Error(data.error);
+    return data.roles || [];
+}
+
+async function addRole(){
+    const emailEl = document.getElementById('role-email-input');
+    const email   = emailEl.value.trim().toLowerCase();
+    const role    = document.getElementById('role-select').value;
+    if(!email){ showToast('⚠️ Enter an email address','#F59E0B'); emailEl.focus(); return; }
+    if(!email.endsWith('@cookunity.com')){ showToast('⚠️ Must be a @cookunity.com address','#F59E0B'); emailEl.focus(); return; }
+    try {
+        await apiUpdateRoles('add', email, role);
+        showToast(`✅ ${email} → ${role}`);
+        emailEl.value = '';
+        cachedRoles = await apiGetRoles();
+        renderRolesTable();
+    } catch(err){ showToast('❌ '+err.message,'#EF4444'); }
+}
+
+async function removeRole(email){
+    if(!confirm(`Remove the ${email} role assignment?\n\nThey will become a read-only Viewer.`)) return;
+    try {
+        await apiUpdateRoles('remove', email, null);
+        showToast(`🗑️ Role removed for ${email}`);
+        cachedRoles = await apiGetRoles();
+        renderRolesTable();
+    } catch(err){ showToast('❌ '+err.message,'#EF4444'); }
+}
+
+async function apiUpdateRoles(subAction, targetEmail, role){
+    const u   = getUser();
+    const res = await fetch(scriptUrl(), {
+        method:  'POST',
+        headers: {'Content-Type':'text/plain;charset=utf-8'},
+        body:    JSON.stringify({action:'updateRoles', email:u?.email||'', subAction, targetEmail, role}),
         redirect:'follow'
     });
     const data = await res.json();
