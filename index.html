@@ -594,7 +594,9 @@ function getCfg()  { try{return JSON.parse(localStorage.getItem(CFG_KEY))||{}; }
 function setCfg(c) { localStorage.setItem(CFG_KEY, JSON.stringify({...getCfg(),...c})); }
 function getUser() { try{return JSON.parse(localStorage.getItem(USER_KEY))||null;}catch(e){return null;} }
 function setUser(u){ localStorage.setItem(USER_KEY, JSON.stringify(u)); }
-function scriptUrl(){ return getCfg().scriptUrl || ''; }
+// Hardcoded so new users never see the setup screen
+const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyNbo2bYFf4jX16-JnGK1vTJR7pmyj_yaI1aL3-dsx7hpDmaaxwuSTRbcdu27y475xi7w/exec';
+function scriptUrl(){ return getCfg().scriptUrl || DEFAULT_SCRIPT_URL; }
 
 // ─── LOADING ─────────────────────────────────────────────
 function showLoading(on, msg='Loading sessions…'){
