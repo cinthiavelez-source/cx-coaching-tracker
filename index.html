@@ -151,6 +151,18 @@
         .toast.show{transform:translateY(0);opacity:1;}
 
         @media(max-width:768px){.main{padding:1rem;}.charts-grid{grid-template-columns:1fr;}.navbar{flex-direction:column;padding:0.75rem 1rem;}.navbar-nav{flex-wrap:wrap;justify-content:center;}}
+
+        /* ── CHIP EDITOR ── */
+        .chip-editor{display:flex;flex-wrap:wrap;gap:0.5rem;min-height:52px;padding:0.75rem;background:#F8FAFC;border-radius:0.6rem;border:1.5px solid #E2E8F0;margin-bottom:0.85rem;align-items:center;}
+        .chip{display:inline-flex;align-items:center;gap:0.35rem;background:white;border:1.5px solid #E2E8F0;border-radius:9999px;padding:0.28rem 0.55rem 0.28rem 0.8rem;font-size:0.8rem;font-weight:600;color:#374151;box-shadow:0 1px 2px rgba(0,0,0,0.05);}
+        .chip-remove{background:none;border:none;cursor:pointer;padding:0 0.1rem;font-size:0.75rem;color:#CBD5E1;line-height:1;display:flex;align-items:center;transition:color 0.15s;font-family:inherit;}
+        .chip-remove:hover{color:#EF4444;}
+        .chip-add-row{display:flex;gap:0.6rem;align-items:center;}
+        .chip-input{flex:1;border:1.5px solid #E2E8F0;border-radius:0.5rem;padding:0.55rem 0.85rem;font-size:0.875rem;color:#1E293B;font-family:inherit;transition:border-color 0.2s;}
+        .chip-input:focus{outline:none;border-color:#4F46E5;box-shadow:0 0 0 3px rgba(79,70,229,0.1);}
+        .chip-input:disabled{opacity:0.6;cursor:not-allowed;}
+        .admin-list-desc{font-size:0.78rem;color:#94A3B8;margin-bottom:0.75rem;}
+        .admin-role-badge{display:inline-flex;align-items:center;gap:0.35rem;background:#EDE9FE;color:#6D28D9;border-radius:9999px;padding:0.25rem 0.75rem;font-size:0.75rem;font-weight:700;}
     </style>
 </head>
 <body>
@@ -216,11 +228,12 @@
     <div class="navbar-left">
         <div class="navbar-brand">📋 CX Coaching Tracker <small>CookUnity</small></div>
         <div class="navbar-nav">
-            <button class="nav-btn active" onclick="navTo('dashboard')">📊 Dashboard</button>
-            <button class="nav-btn" onclick="navTo('log')">➕ Log Session</button>
-            <button class="nav-btn" onclick="navTo('sessions')">📋 Sessions Log</button>
-            <button class="nav-btn" onclick="navTo('wow')">📅 Week over Week</button>
-            <button class="nav-btn" onclick="navTo('mom')">📆 Month over Month</button>
+            <button class="nav-btn active" data-page="dashboard" onclick="navTo('dashboard')">📊 Dashboard</button>
+            <button class="nav-btn" data-page="log" onclick="navTo('log')">➕ Log Session</button>
+            <button class="nav-btn" data-page="sessions" onclick="navTo('sessions')">📋 Sessions Log</button>
+            <button class="nav-btn" data-page="wow" onclick="navTo('wow')">📅 Week over Week</button>
+            <button class="nav-btn" data-page="mom" onclick="navTo('mom')">📆 Month over Month</button>
+            <button id="btn-admin" class="nav-btn" data-page="admin" onclick="navTo('admin')" style="display:none">⚙️ Manage Lists</button>
         </div>
     </div>
     <div class="navbar-right" id="navbar-right">
@@ -285,18 +298,11 @@
                     <div class="form-group"><label>🤝 Coaching Dynamic *</label>
                         <select id="f-dynamic" required>
                             <option value="">Select dynamic…</option>
-                            <option value="1:1">1:1 — Individual Coaching</option>
-                            <option value="War Room">War Room — Group Intensive</option>
-                            <option value="Buddy Program">Buddy Program — Peer Coaching</option>
                         </select>
                     </div>
                     <div class="form-group"><label>🎯 KPI Coached *</label>
                         <select id="f-kpi" required>
                             <option value="">Select KPI…</option>
-                            <option value="CSAT">CSAT — Customer Satisfaction Score</option>
-                            <option value="QA Score">QA Score — Quality Assurance</option>
-                            <option value="FCR">FCR — First Contact Resolution</option>
-                            <option value="TPH">TPH — Tickets Per Hour</option>
                         </select>
                     </div>
                     <div class="form-group"><label>📉 KPI Baseline</label><input type="number" id="f-baseline" placeholder="e.g. 72" step="0.1" min="0"></div>
@@ -305,52 +311,16 @@
                     <div class="form-group"><label>🔍 Root Cause Coached *</label>
                         <select id="f-rootcause" required>
                             <option value="">Select root cause…</option>
-                            <option value="Knowledge Gap">📚 Knowledge Gap</option>
-                            <option value="Skill Gap">🎯 Skill Gap</option>
-                            <option value="Motivation Gap">💡 Motivation Gap</option>
-                            <option value="Workload / Environment Factor">⚙️ Workload / Environment Factor</option>
                         </select>
                     </div>
                     <div class="form-group"><label>🔧 Tool Used *</label>
                         <select id="f-tool" required>
                             <option value="">Select tool…</option>
-                            <optgroup label="— Observation & Modeling —">
-                                <option value="Visual Process Walkthrough">📊 Visual Process Walkthrough</option>
-                                <option value="Demo Call (Supervisor Modeling)">📞 Demo Call (Supervisor Modeling)</option>
-                                <option value="Model Tape">🎬 Model Tape</option>
-                                <option value="Self Tape">📹 Self Tape</option>
-                                <option value="ST vs MT (Self Tape vs Model Tape)">🔄 ST vs MT (Self Tape vs Model Tape)</option>
-                                <option value="ST vs ST (Old vs Recent Performance)">📈 ST vs ST (Old vs Recent Performance)</option>
-                                <option value="ST vs ST (Performance Regression Comparison)">📉 ST vs ST (Performance Regression Comparison)</option>
-                            </optgroup>
-                            <optgroup label="— Live Practice —">
-                                <option value="Coach Call (Live Guided Execution)">🎯 Coach Call (Live Guided Execution)</option>
-                                <option value="Role Play">🎭 Role Play</option>
-                                <option value="Fastball (Rapid Q&A)">⚡ Fastball (Rapid Q&A)</option>
-                            </optgroup>
-                            <optgroup label="— Assessment —">
-                                <option value="Quiz (Written or Live)">📝 Quiz (Written or Live)</option>
-                                <option value="Process Debrief">🔍 Process Debrief</option>
-                                <option value="Volume Pattern Analysis">📊 Volume Pattern Analysis</option>
-                            </optgroup>
-                            <optgroup label="— Alignment & Strategy —">
-                                <option value="Define Objective (SMART Alignment)">🎯 Define Objective (SMART Alignment)</option>
-                                <option value="KPI Guardrail Alignment">🛡️ KPI Guardrail Alignment</option>
-                                <option value="Escalation &amp; Structural Feedback">🔺 Escalation &amp; Structural Feedback</option>
-                                <option value="Positive Reinforcement Reset">✨ Positive Reinforcement Reset</option>
-                            </optgroup>
-                            <optgroup label="— Discussion Techniques —">
-                                <option value="Analogy Coaching">💡 Analogy Coaching</option>
-                                <option value="Debate Discussion">💬 Debate Discussion</option>
-                            </optgroup>
                         </select>
                     </div>
                     <div class="form-group"><label>✅ Session Outcome *</label>
                         <select id="f-outcome" required>
                             <option value="">Select outcome…</option>
-                            <option value="Improved">✅ Improved</option>
-                            <option value="No Change">⚠️ No Change</option>
-                            <option value="Needs Follow-up">🔄 Needs Follow-up</option>
                         </select>
                     </div>
                     <div class="form-group full-width"><label>📝 Session Notes &amp; Next Steps</label><textarea id="f-notes" placeholder="Additional observations, actions assigned, follow-up date…"></textarea></div>
@@ -384,22 +354,23 @@
                 <div class="form-group"><label>Dynamic</label>
                     <select id="filter-dynamic" onchange="renderSessionsTable(cachedSessions)">
                         <option value="">All Dynamics</option>
-                        <option>1:1</option>
-                        <option>War Room</option>
-                        <option>Buddy Program</option>
                     </select>
                 </div>
-                <div class="form-group"><label>KPI</label><select id="filter-kpi" onchange="renderSessionsTable(cachedSessions)"><option value="">All KPIs</option><option>CSAT</option><option>QA Score</option><option>FCR</option><option>TPH</option></select></div>
+                <div class="form-group"><label>KPI</label>
+                    <select id="filter-kpi" onchange="renderSessionsTable(cachedSessions)">
+                        <option value="">All KPIs</option>
+                    </select>
+                </div>
                 <div class="form-group"><label>Root Cause</label>
                     <select id="filter-rc" onchange="renderSessionsTable(cachedSessions)">
                         <option value="">All Root Causes</option>
-                        <option>Knowledge Gap</option>
-                        <option>Skill Gap</option>
-                        <option>Motivation Gap</option>
-                        <option>Workload / Environment Factor</option>
                     </select>
                 </div>
-                <div class="form-group"><label>Outcome</label><select id="filter-outcome" onchange="renderSessionsTable(cachedSessions)"><option value="">All Outcomes</option><option>Improved</option><option>No Change</option><option>Needs Follow-up</option></select></div>
+                <div class="form-group"><label>Outcome</label>
+                    <select id="filter-outcome" onchange="renderSessionsTable(cachedSessions)">
+                        <option value="">All Outcomes</option>
+                    </select>
+                </div>
                 <div class="form-group" style="justify-content:flex-end"><label>&nbsp;</label><button class="btn btn-secondary" onclick="clearFilters()">Clear</button></div>
             </div>
         </div>
@@ -470,6 +441,22 @@
         </div>
     </div>
 
+    <!-- ── ADMIN — MANAGE LISTS ── -->
+    <div id="page-admin" class="page">
+        <div class="header-actions">
+            <div class="page-header" style="margin-bottom:0">
+                <h1>⚙️ Manage Lists</h1>
+                <p>Edit all dropdown options — changes save to Google Sheets instantly and apply to every coach immediately.</p>
+            </div>
+            <span class="admin-role-badge">🔐 Admin Only</span>
+        </div>
+        <div class="info-strip">
+            <span class="icon">💡</span>
+            <span>Add or remove items from any list using the chip editors below. Removing an item does <strong>not</strong> affect sessions already logged with that value — it only removes it from the dropdown for future sessions.</span>
+        </div>
+        <div id="admin-lists-container"></div>
+    </div>
+
 </div><!-- /main -->
 <div id="toast" class="toast"></div>
 
@@ -481,10 +468,25 @@
 const CFG_KEY  = 'cx_cfg_v2';
 const USER_KEY = 'cx_usr_v2';
 
-const ROOT_CAUSES = ['Knowledge Gap','Skill Gap','Motivation Gap','Workload / Environment Factor'];
-const DYNAMICS    = ['1:1','War Room','Buddy Program'];
+// Static display maps — stay hardcoded, new values just fall back gracefully
 const DYNAMICS_BADGE = {'1:1':'badge-11','War Room':'badge-wr','Buddy Program':'badge-bp'};
 const DYNAMICS_ICON  = {'1:1':'🧑','War Room':'⚔️','Buddy Program':'🤝'};
+
+// ─── LIVE CONFIG STATE (populated from backend on load) ──
+const DEFAULT_LISTS = {
+    dynamics:   ['1:1','War Room','Buddy Program'],
+    kpis:       ['CSAT','QA Score','FCR','TPH'],
+    rootCauses: ['Knowledge Gap','Skill Gap','Motivation Gap','Workload / Environment Factor'],
+    tools:      ['Visual Process Walkthrough','Demo Call (Supervisor Modeling)','Model Tape','Self Tape',
+                 'ST vs MT (Self Tape vs Model Tape)','ST vs ST (Old vs Recent Performance)',
+                 'ST vs ST (Performance Regression Comparison)','Coach Call (Live Guided Execution)',
+                 'Role Play','Fastball (Rapid Q&A)','Quiz (Written or Live)','Process Debrief',
+                 'Volume Pattern Analysis','Define Objective (SMART Alignment)','KPI Guardrail Alignment',
+                 'Escalation & Structural Feedback','Positive Reinforcement Reset','Analogy Coaching','Debate Discussion'],
+    outcomes:   ['Improved','No Change','Needs Follow-up']
+};
+let cachedConfig = JSON.parse(JSON.stringify(DEFAULT_LISTS));
+let cachedRole   = 'viewer';
 
 const TOOLS = [
     'Visual Process Walkthrough','Demo Call (Supervisor Modeling)','Model Tape','Self Tape',
@@ -570,12 +572,14 @@ async function testAndSaveUrl(){
     try {
         const res  = await fetch(url, { redirect:'follow' });
         const data = await res.json();
-        if (!Array.isArray(data)) throw new Error('Unexpected response');
+        // Accept both v1 (plain array) and v2 ({sessions, config, role}) response shapes
+        const count = Array.isArray(data) ? data.length : Array.isArray(data?.sessions) ? data.sessions.length : null;
+        if (count === null) throw new Error('Unexpected response');
 
         setCfg({ scriptUrl: url });
-        okEl.textContent = `✅ Connected! Found ${data.length} session${data.length!==1?'s':''}.`;
+        okEl.textContent = `✅ Connected! Found ${count} session${count!==1?'s':''}.`;
         okEl.style.display = 'block';
-        btn.textContent = '✅ Connected — Continue →';
+        btn.textContent = `✅ Connected — Continue →`;
         setTimeout(()=>{
             document.getElementById('setup-overlay').style.display = 'none';
             showLogin();
@@ -604,6 +608,7 @@ function doLogin(){
     }
     setUser({name, email});
     document.getElementById('login-overlay').style.display = 'none';
+    updateAdminUI(); // show/hide admin button immediately, before fetch completes
     initApp();
 }
 
@@ -628,10 +633,25 @@ async function apiFetch(force=false){
     setSyncStatus('syncing');
     showLoading(true);
     try {
-        const res  = await fetch(scriptUrl(), {redirect:'follow'});
+        // Pass email so backend returns the correct role
+        const u   = getUser();
+        const url = u ? `${scriptUrl()}?email=${encodeURIComponent(u.email)}` : scriptUrl();
+        const res = await fetch(url, {redirect:'follow'});
         if(!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        cachedSessions = Array.isArray(data) ? data.map(normalizeRow) : [];
+
+        // Handle both v1 (plain array) and v2 ({sessions, config, role}) backend formats
+        if (Array.isArray(data)) {
+            cachedSessions = data.map(normalizeRow);
+        } else {
+            cachedSessions = (data.sessions || []).map(normalizeRow);
+            if (data.config) {
+                // Merge backend config over defaults so any new keys still have fallbacks
+                cachedConfig = {...DEFAULT_LISTS, ...data.config};
+                populateDropdowns();
+            }
+            if (data.role) { cachedRole = data.role; updateAdminUI(); }
+        }
         updateDataLists();
         setSyncStatus('ok');
     } catch(err) {
@@ -727,15 +747,64 @@ function updateDataLists(){
     document.getElementById('list-coaches').innerHTML=co.map(n=>`<option value="${n}">`).join('');
 }
 
+// ─── DROPDOWN POPULATION ─────────────────────────────────
+function populateDropdowns(){
+    const c = cachedConfig;
+    fillSelect('f-dynamic',   c.dynamics,   'Select dynamic…');
+    fillSelect('f-kpi',       c.kpis,       'Select KPI…');
+    fillSelect('f-rootcause', c.rootCauses, 'Select root cause…');
+    fillSelect('f-tool',      c.tools,      'Select tool…');
+    fillSelect('f-outcome',   c.outcomes,   'Select outcome…');
+    fillFilterSelect('filter-dynamic', c.dynamics,   'All Dynamics');
+    fillFilterSelect('filter-kpi',     c.kpis,       'All KPIs');
+    fillFilterSelect('filter-rc',      c.rootCauses, 'All Root Causes');
+    fillFilterSelect('filter-outcome', c.outcomes,   'All Outcomes');
+}
+
+function fillSelect(id, values, placeholder){
+    const el = document.getElementById(id); if(!el) return;
+    const cur = el.value;
+    el.innerHTML = `<option value="">${placeholder}</option>` +
+        (values||[]).map(v=>`<option value="${escHtml(v)}"${v===cur?' selected':''}>${escHtml(v)}</option>`).join('');
+}
+
+function fillFilterSelect(id, values, allLabel){
+    const el = document.getElementById(id); if(!el) return;
+    const cur = el.value;
+    el.innerHTML = `<option value="">${allLabel}</option>` +
+        (values||[]).map(v=>`<option value="${escHtml(v)}"${v===cur?' selected':''}>${escHtml(v)}</option>`).join('');
+}
+
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// Default admin email — mirrors DEFAULT_ADMIN in apps_script_backend.js.
+// Used as a client-side fallback when the backend is still on the old plain-array
+// format and doesn't return a role. The backend still enforces auth on every write.
+const DEFAULT_ADMIN_EMAIL = 'cinthiavelez@cookunity.com';
+
+function updateAdminUI(){
+    const btn = document.getElementById('btn-admin');
+    const u   = getUser();
+    const isAdmin = cachedRole === 'admin' ||
+                    (u && u.email.toLowerCase() === DEFAULT_ADMIN_EMAIL.toLowerCase());
+    if(btn) btn.style.display = isAdmin ? '' : 'none';
+}
+
 // ─── NAVIGATION ──────────────────────────────────────────
-const PAGES=['dashboard','log','sessions','wow','mom'];
+const PAGES=['dashboard','log','sessions','wow','mom','admin'];
 async function navTo(page){
     currentPage = page;
-    PAGES.forEach((p,i)=>{
-        document.getElementById('page-'+p).classList.toggle('active',p===page);
-        document.querySelectorAll('.nav-btn')[i].classList.toggle('active',p===page);
+    // Activate correct page panel
+    PAGES.forEach(p=>{
+        const el = document.getElementById('page-'+p);
+        if(el) el.classList.toggle('active', p===page);
+    });
+    // Activate correct nav button via data-page attribute
+    document.querySelectorAll('.nav-btn[data-page]').forEach(b=>{
+        b.classList.toggle('active', b.dataset.page===page);
     });
     if(page==='log') return;
+    if(page==='admin'){ renderAdminPage(); return; }
     const sessions = await apiFetch();
     renderPage(page, sessions);
 }
@@ -852,28 +921,37 @@ function renderMainCharts(sessions){
     charts['outcomes']=new Chart(document.getElementById('chartOutcomes'),{type:'doughnut',data:{labels:Object.keys(oc),datasets:[{data:Object.values(oc),backgroundColor:['#10B981','#F59E0B','#EF4444'],borderWidth:3,borderColor:'white'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},cutout:'62%'}});
 
     // ── Coaching Dynamic donut
-    const dc={};DYNAMICS.forEach(d=>dc[d]=0);
+    const dynList = cachedConfig.dynamics||DEFAULT_LISTS.dynamics;
+    const dc={};dynList.forEach(d=>dc[d]=0);
     sessions.forEach(s=>{dc[s.dynamic]=(dc[s.dynamic]||0)+1;});
+    // include any dynamics from actual data that aren't in config (legacy)
+    sessions.forEach(s=>{if(!(s.dynamic in dc))dc[s.dynamic]=0;dc[s.dynamic]++;});
     destroyChart('dynamic');
     charts['dynamic']=new Chart(document.getElementById('chartDynamic'),{type:'doughnut',data:{labels:Object.keys(dc),datasets:[{data:Object.values(dc),backgroundColor:DYN_COLORS,borderWidth:3,borderColor:'white'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},cutout:'62%'}});
 
     // ── Root Cause stacked bar by outcome
+    const rcList = cachedConfig.rootCauses||DEFAULT_LISTS.rootCauses;
+    const outList = cachedConfig.outcomes||DEFAULT_LISTS.outcomes;
     const rcMap={};
-    ROOT_CAUSES.forEach(rc=>rcMap[rc]={'Improved':0,'No Change':0,'Needs Follow-up':0});
-    sessions.forEach(s=>{ if(rcMap[s.rootCause]) rcMap[s.rootCause][s.outcome]=(rcMap[s.rootCause][s.outcome]||0)+1; });
-    const rcLabels=ROOT_CAUSES.filter(rc=>Object.values(rcMap[rc]).some(v=>v>0));
+    rcList.forEach(rc=>{ rcMap[rc]={}; outList.forEach(o=>rcMap[rc][o]=0); });
+    sessions.forEach(s=>{
+        if(!rcMap[s.rootCause]) rcMap[s.rootCause]={};  // handle legacy values
+        rcMap[s.rootCause][s.outcome]=(rcMap[s.rootCause][s.outcome]||0)+1;
+    });
+    const rcLabels=Object.keys(rcMap).filter(rc=>Object.values(rcMap[rc]).some(v=>v>0));
     destroyChart('rootCause');
-    charts['rootCause']=new Chart(document.getElementById('chartRootCause'),{type:'bar',data:{labels:rcLabels,datasets:[
-        {label:'Improved',data:rcLabels.map(rc=>rcMap[rc]['Improved']),backgroundColor:'#10B981'},
-        {label:'No Change',data:rcLabels.map(rc=>rcMap[rc]['No Change']),backgroundColor:'#F59E0B'},
-        {label:'Needs Follow-up',data:rcLabels.map(rc=>rcMap[rc]['Needs Follow-up']),backgroundColor:'#EF4444'}
-    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top'}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:'#F1F5F9'},title:{display:true,text:'Sessions'}}}}});
+    charts['rootCause']=new Chart(document.getElementById('chartRootCause'),{type:'bar',data:{labels:rcLabels,datasets:
+        outList.map((o,i)=>({label:o,data:rcLabels.map(rc=>rcMap[rc][o]||0),backgroundColor:['#10B981','#F59E0B','#EF4444'][i]||COLORS[i]}))
+    },options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top'}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:'#F1F5F9'},title:{display:true,text:'Sessions'}}}}});
 
     // ── Top tool per root cause (horizontal grouped bar)
     const rcToolData={};
-    ROOT_CAUSES.forEach(rc=>{ rcToolData[rc]={}; });
-    sessions.forEach(s=>{ if(rcToolData[s.rootCause]) rcToolData[s.rootCause][s.tool]=(rcToolData[s.rootCause][s.tool]||0)+1; });
-    const rcToolLabels=ROOT_CAUSES;
+    rcList.forEach(rc=>{ rcToolData[rc]={}; });
+    sessions.forEach(s=>{
+        if(!rcToolData[s.rootCause]) rcToolData[s.rootCause]={};
+        rcToolData[s.rootCause][s.tool]=(rcToolData[s.rootCause][s.tool]||0)+1;
+    });
+    const rcToolLabels=rcList;
     const topToolsPerRC=rcToolLabels.map(rc=>{ const e=Object.entries(rcToolData[rc]).sort((a,b)=>b[1]-a[1]); return e[0]?TOOL_SHORT[e[0][0]]||e[0][0]:'—'; });
     const topCountsPerRC=rcToolLabels.map(rc=>{ const e=Object.entries(rcToolData[rc]).sort((a,b)=>b[1]-a[1]); return e[0]?e[0][1]:0; });
     destroyChart('toolByRC');
@@ -1002,12 +1080,12 @@ function renderWoW(sessions){
     const rates=weeks.map(w=>Math.round(w.sessions.filter(s=>s.outcome==='Improved').length/w.sessions.length*100));
     destroyChart('wowMain');
     charts['wowMain']=new Chart(document.getElementById('chartWowMain'),{data:{labels,datasets:[{type:'bar',label:'Sessions',data:counts,backgroundColor:'rgba(79,70,229,0.25)',borderColor:'#4F46E5',borderWidth:1.5,borderRadius:6,yAxisID:'y'},{type:'line',label:'Improvement Rate %',data:rates,borderColor:'#10B981',backgroundColor:'rgba(16,185,129,0.08)',tension:0.4,pointBackgroundColor:'#10B981',pointRadius:4,yAxisID:'y2'}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top'}},scales:{y:{grid:{color:'#F1F5F9'},beginAtZero:true,title:{display:true,text:'Sessions',color:'#64748B'}},y2:{position:'right',grid:{display:false},ticks:{callback:v=>v+'%'},max:100,beginAtZero:true,title:{display:true,text:'Impr. Rate %',color:'#10B981'}}}}});
-    const oK=['Improved','No Change','Needs Follow-up'],oC=['#10B981','#F59E0B','#EF4444'];
+    const oK=cachedConfig.outcomes||DEFAULT_LISTS.outcomes,oC=['#10B981','#F59E0B','#EF4444'];
     destroyChart('wowOutcomes');
-    charts['wowOutcomes']=new Chart(document.getElementById('chartWowOutcomes'),{type:'bar',data:{labels,datasets:oK.map((o,i)=>({label:o,data:weeks.map(w=>w.sessions.filter(s=>s.outcome===o).length),backgroundColor:oC[i]}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:'#F1F5F9'}}}}});
-    const kK=['CSAT','QA Score','FCR','TPH'],kC=['#7C3AED','#2563EB','#047857','#D97706'];
+    charts['wowOutcomes']=new Chart(document.getElementById('chartWowOutcomes'),{type:'bar',data:{labels,datasets:oK.map((o,i)=>({label:o,data:weeks.map(w=>w.sessions.filter(s=>s.outcome===o).length),backgroundColor:oC[i]||COLORS[i]}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:'#F1F5F9'}}}}});
+    const kK=cachedConfig.kpis||DEFAULT_LISTS.kpis,kC=['#7C3AED','#2563EB','#047857','#D97706'];
     destroyChart('wowKPI');
-    charts['wowKPI']=new Chart(document.getElementById('chartWowKPI'),{type:'bar',data:{labels,datasets:kK.map((k,i)=>({label:k,data:weeks.map(w=>w.sessions.filter(s=>s.kpi===k).length),backgroundColor:kC[i]}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:'#F1F5F9'}}}}});
+    charts['wowKPI']=new Chart(document.getElementById('chartWowKPI'),{type:'bar',data:{labels,datasets:kK.map((k,i)=>({label:k,data:weeks.map(w=>w.sessions.filter(s=>s.kpi===k).length),backgroundColor:kC[i]||COLORS[i]}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:'#F1F5F9'}}}}});
     const tbody=document.getElementById('wow-table');
     tbody.innerHTML=weeks.slice().reverse().map((w,i,arr)=>{
         const p2=arr[i+1];
@@ -1053,12 +1131,13 @@ function renderMoM(sessions){
     charts['momMain']=new Chart(document.getElementById('chartMomMain'),{data:{labels,datasets:[{type:'bar',label:'Sessions',data:counts,backgroundColor:'rgba(79,70,229,0.25)',borderColor:'#4F46E5',borderWidth:1.5,borderRadius:6,yAxisID:'y'},{type:'line',label:'Improvement Rate %',data:rates,borderColor:'#10B981',backgroundColor:'rgba(16,185,129,0.08)',tension:0.4,pointBackgroundColor:'#10B981',pointRadius:5,yAxisID:'y2'}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top'}},scales:{y:{grid:{color:'#F1F5F9'},beginAtZero:true,title:{display:true,text:'Sessions',color:'#64748B'}},y2:{position:'right',grid:{display:false},ticks:{callback:v=>v+'%'},max:100,beginAtZero:true,title:{display:true,text:'Impr. Rate %',color:'#10B981'}}}}});
 
     // Coaching Dynamic mix by month (stacked bar)
+    const momDynList = cachedConfig.dynamics||DEFAULT_LISTS.dynamics;
     destroyChart('momDynamic');
-    charts['momDynamic']=new Chart(document.getElementById('chartMomDynamic'),{type:'bar',data:{labels,datasets:DYNAMICS.map((d,i)=>({label:d,data:months.map(m=>m.sessions.filter(s=>s.dynamic===d).length),backgroundColor:DYN_COLORS[i]}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:'#F1F5F9'}}}}});
+    charts['momDynamic']=new Chart(document.getElementById('chartMomDynamic'),{type:'bar',data:{labels,datasets:momDynList.map((d,i)=>({label:d,data:months.map(m=>m.sessions.filter(s=>s.dynamic===d).length),backgroundColor:DYN_COLORS[i]||COLORS[i]}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:'#F1F5F9'}}}}});
 
-    const kK=['CSAT','QA Score','FCR','TPH'],kC=['#7C3AED','#2563EB','#047857','#D97706'];
+    const kK=cachedConfig.kpis||DEFAULT_LISTS.kpis,kC=['#7C3AED','#2563EB','#047857','#D97706'];
     destroyChart('momKPI');
-    charts['momKPI']=new Chart(document.getElementById('chartMomKPI'),{type:'bar',data:{labels,datasets:kK.map((k,i)=>({label:k,data:months.map(m=>m.sessions.filter(s=>s.kpi===k).length),backgroundColor:kC[i]}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:'#F1F5F9'}}}}});
+    charts['momKPI']=new Chart(document.getElementById('chartMomKPI'),{type:'bar',data:{labels,datasets:kK.map((k,i)=>({label:k,data:months.map(m=>m.sessions.filter(s=>s.kpi===k).length),backgroundColor:kC[i]||COLORS[i]}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:'#F1F5F9'}}}}});
 
     const tbody=document.getElementById('mom-table');
     tbody.innerHTML=months.slice().reverse().map((m,i,arr)=>{
@@ -1072,6 +1151,94 @@ function renderMoM(sessions){
         const topK=Object.entries(kc2).sort((a,b)=>b[1]-a[1])[0];
         return`<tr><td><strong>${m.label}</strong></td><td class="num">${m.sessions.length}</td><td class="num">${dm===null?'—':`<span class="${dm>0?'trend-up':dm<0?'trend-down':'trend-flat'}">${dm>0?'+':''}${dm}</span>`}</td><td class="num">${impr}</td><td class="num"><strong>${rate}%</strong></td><td class="num">${al!==null?`<span class="${al>0?'trend-up':'trend-flat'}">${al>0?'+':''}${al}%</span>`:'—'}</td><td>${topK?`<span class="badge ${KPI_BADGE[topK[0]]||'badge-csat'}">${topK[0]}</span>`:'—'}</td><td style="font-size:0.78rem">${topTool(m.sessions)}</td><td class="num">${newSp[m.key]||0}</td><td class="num">${m.coaches.size}</td></tr>`;
     }).join('');
+}
+
+// ─── ADMIN — MANAGE LISTS ────────────────────────────────
+const ADMIN_LISTS = [
+    {key:'dynamics',   name:'Coaching Dynamics',  icon:'🤝', desc:'Options in the Coaching Dynamic dropdown'},
+    {key:'kpis',       name:'KPIs',               icon:'🎯', desc:'Options in the KPI Coached dropdown'},
+    {key:'rootCauses', name:'Root Causes',         icon:'🔍', desc:'Options in the Root Cause Coached dropdown'},
+    {key:'outcomes',   name:'Session Outcomes',    icon:'✅', desc:'Options in the Session Outcome dropdown'},
+    {key:'tools',      name:'Coaching Tools',      icon:'🔧', desc:'Options in the Tool Used dropdown (sorted alphabetically)'},
+];
+
+function renderAdminPage(){
+    const c = cachedConfig;
+    document.getElementById('admin-lists-container').innerHTML = ADMIN_LISTS.map(l=>`
+        <div class="card" style="margin-bottom:1.25rem">
+            <div class="card-title">${l.icon} ${l.name}</div>
+            <p class="admin-list-desc">${l.desc}</p>
+            <div class="chip-editor" id="chips-${l.key}">
+                ${(c[l.key]||[]).map(v=>chipHtml(l.key,v)).join('')}
+                ${!(c[l.key]||[]).length ? '<span style="color:#CBD5E1;font-size:0.8rem;font-style:italic">No items yet — add one below.</span>' : ''}
+            </div>
+            <div class="chip-add-row">
+                <input class="chip-input" type="text" id="chip-input-${l.key}"
+                    placeholder="Type new ${l.name.toLowerCase().replace(/s$/,'')} and press Enter…"
+                    onkeydown="if(event.key==='Enter'){event.preventDefault();adminAddItem('${l.key}');}">
+                <button class="btn btn-primary" style="padding:0.5rem 1.1rem;font-size:0.82rem;white-space:nowrap"
+                    onclick="adminAddItem('${l.key}')">＋ Add</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function chipHtml(listKey, value){
+    const safeKey = listKey.replace(/'/g,"\\'");
+    const safeVal = value.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return `<span class="chip">${escHtml(value)}<button class="chip-remove" onclick="adminRemoveItem('${safeKey}','${safeVal}')" title="Remove">✕</button></span>`;
+}
+
+async function adminAddItem(listKey){
+    const input = document.getElementById(`chip-input-${listKey}`);
+    const val   = input.value.trim();
+    if(!val){ input.focus(); return; }
+    const cur = cachedConfig[listKey] || [];
+    if(cur.map(v=>v.toLowerCase()).includes(val.toLowerCase())){
+        showToast('⚠️ This item already exists','#F59E0B'); input.focus(); return;
+    }
+    const newList = [...cur, val];
+    input.disabled = true;
+    try {
+        await apiUpdateConfig(listKey, newList);
+        cachedConfig[listKey] = newList;
+        populateDropdowns();
+        input.value = '';
+        renderAdminPage();
+        document.getElementById(`chip-input-${listKey}`).focus();
+        showToast(`✅ Added "${val}" to ${listKey}`);
+    } catch(err){
+        showToast('❌ Failed to save: '+err.message,'#EF4444');
+    } finally {
+        input.disabled = false;
+    }
+}
+
+async function adminRemoveItem(listKey, value){
+    if(!confirm(`Remove "${value}" from the list?\n\nSessions already logged with this value will not be affected — it will only stop appearing as an option for future sessions.`)) return;
+    const newList = (cachedConfig[listKey]||[]).filter(v=>v!==value);
+    try {
+        await apiUpdateConfig(listKey, newList);
+        cachedConfig[listKey] = newList;
+        populateDropdowns();
+        renderAdminPage();
+        showToast(`🗑️ Removed "${value}"`);
+    } catch(err){
+        showToast('❌ Failed to remove: '+err.message,'#EF4444');
+    }
+}
+
+async function apiUpdateConfig(key, values){
+    const u   = getUser();
+    const res = await fetch(scriptUrl(), {
+        method:  'POST',
+        headers: {'Content-Type':'text/plain;charset=utf-8'},
+        body:    JSON.stringify({action:'updateConfig', email:u?.email||'', key, values}),
+        redirect:'follow'
+    });
+    const data = await res.json();
+    if(data.error) throw new Error(data.error);
+    return data;
 }
 
 // ─── EXPORT ──────────────────────────────────────────────
@@ -1107,7 +1274,11 @@ function showToast(msg,color='#10B981'){
 // ─── INIT ────────────────────────────────────────────────
 async function initApp(){
     renderNavUser();
+    // Seed all dropdowns with local defaults immediately (no visible flash)
+    populateDropdowns();
+    // apiFetch will overwrite cachedConfig from backend, re-populate, and set role
     const sessions = await apiFetch(true);
+    updateAdminUI();
     renderDashboard(sessions);
     clearInterval(autoRefreshTimer);
     autoRefreshTimer = setInterval(async()=>{
@@ -1125,6 +1296,7 @@ async function initApp(){
     } else if(!user){
         showLogin();
     } else {
+        updateAdminUI(); // apply immediately on page reload before fetch
         initApp();
     }
 })();
