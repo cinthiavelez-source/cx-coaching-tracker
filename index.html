@@ -890,8 +890,8 @@ async function navTo(page){
     });
     if(page==='log') return;
     if(page==='admin'){ renderAdminPage(); return; }
-    const sessions = await apiFetch();
-    renderPage(page, sessions);
+    // Use in-memory cache for instant tab switching — network fetch only on load/refresh/save
+    renderPage(page, cachedSessions);
 }
 
 function renderPage(page, sessions){
